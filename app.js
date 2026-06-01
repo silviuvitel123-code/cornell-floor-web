@@ -1006,24 +1006,18 @@ async function bootstrap() {
   bindEvents();
   registerServiceWorker();
 
-  if (!isFirebaseConfigured()) {
-    state = loadLocalState();
-    if (!state.lastTimesheetMonth) state.lastTimesheetMonth = currentMonthKey();
-    appReady = true;
-    $("#fromDate").value = monthStartIso();
-    $("#toDate").value = monthEndIso();
-    $("#companyName").value = state.company;
-    $("#fiscalCode").value = state.fiscalCode;
-    syncTimesheetToCurrentMonth({ notifyUser: true });
-    render();
-    initAuth();
-    initHeroSlider();
-    return;
-  }
-
-  initAuth();
+  // Render imediat din localStorage — nu asteapta Firebase
+  state = loadLocalState();
+  if (!state.lastTimesheetMonth) state.lastTimesheetMonth = currentMonthKey();
+  $("#fromDate").value = monthStartIso();
+  $("#toDate").value = monthEndIso();
+  $("#companyName").value = state.company || "";
+  $("#fiscalCode").value = state.fiscalCode || "";
+  syncTimesheetToCurrentMonth({ notifyUser: false });
   appReady = true;
-  renderAccountPanel();
+  render(); // afiseaza datele locale instant
+
+  initAuth();    // Firebase updateaza in background cand e gata
   initHeroSlider();
 }
 
