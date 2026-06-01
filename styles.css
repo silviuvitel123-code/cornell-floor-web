@@ -2,15 +2,15 @@
   --yellow: #f7b719;
   --yellow-dark: #d99800;
   --black: #060708;
-  --ink: #111827;
-  --muted: #6b7280;
-  --line: #1b1b1b;
-  --grid: #dcdcdc;
-  --paper: #ffffff;
+  --ink: #e8e0d0;
+  --muted: #9a9080;
+  --line: #3d3a34;
+  --grid: #3d3a34;
+  --paper: #272520;
   --excel-head: #ffcc99;
-  --weekend: #6ea6df;
-  --panel: #ffffff;
-  --dark-panel: #101417;
+  --weekend: #3a5a7a;
+  --panel: #272520;
+  --dark-panel: #1c1b18;
 }
 
 * { box-sizing: border-box; }
@@ -18,7 +18,7 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: #f1f3f5;
+  background: #1c1b18;
   color: var(--ink);
   font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
@@ -460,7 +460,7 @@ h3 { font-size: 24px; }
   height: 9px;
   overflow: hidden;
   border-radius: 999px;
-  background: #e5e7eb;
+  background: #3d3a34;
 }
 
 .meter i {
@@ -522,9 +522,9 @@ h3 { font-size: 24px; }
   display: grid;
   gap: 10px;
   padding: 14px;
-  border: 1px solid #d7dde4;
+  border: 1px solid #3d3a34;
   border-radius: 9px;
-  background: #fbfcfd;
+  background: #1c1b18;
 }
 
 .site-row-top,
@@ -541,14 +541,14 @@ h3 { font-size: 24px; }
   min-height: 28px;
   border-radius: 999px;
   padding: 0 10px;
-  background: #fff4ce;
-  color: #7a4c00;
+  background: rgba(247, 183, 25, 0.18);
+  color: #f7b719;
   font-size: 12px;
   font-weight: 900;
 }
 
-.pill.danger { background: #fee2e2; color: #7f1d1d; }
-.pill.ok { background: #dcfce7; color: #14532d; }
+.pill.danger { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+.pill.ok { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
 
 .outline-btn,
 .dark-btn,
@@ -560,21 +560,22 @@ h3 { font-size: 24px; }
 }
 
 .outline-btn {
-  border: 1px solid #111;
-  background: #fff;
-  color: #111;
+  border: 1px solid #3d3a34;
+  background: #272520;
+  color: #e8e0d0;
 }
 
 .dark-btn {
-  border: 1px solid #111;
-  background: #111;
-  color: #fff;
+  border: 1px solid #3d3a34;
+  background: #1c1b18;
+  color: #e8e0d0;
 }
 
 .mini-btn {
   min-height: 34px;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid #3d3a34;
+  background: #272520;
+  color: #e8e0d0;
   font-size: 13px;
 }
 
@@ -586,7 +587,7 @@ h3 { font-size: 24px; }
 label {
   display: grid;
   gap: 7px;
-  color: #606977;
+  color: #9a9080;
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
@@ -596,11 +597,11 @@ input,
 select {
   width: 100%;
   min-height: 42px;
-  border: 1px solid #d3d7dd;
+  border: 1px solid #3d3a34;
   border-radius: 8px;
   padding: 0 12px;
-  background: #fff;
-  color: #111;
+  background: #1c1b18;
+  color: #e8e0d0;
 }
 
 .pontaj-tools {
@@ -693,8 +694,8 @@ select {
 
 .worker-row {
   background:
-    linear-gradient(90deg, rgba(247, 183, 25, 0.12), transparent),
-    #fbfcfd;
+    linear-gradient(90deg, rgba(247, 183, 25, 0.10), transparent),
+    #1c1b18;
 }
 
 .worker-hours {
@@ -705,9 +706,10 @@ select {
 
 .worker-hours button {
   min-height: 42px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #3d3a34;
   border-radius: 8px;
-  background: #fff;
+  background: #272520;
+  color: #e8e0d0;
   font-weight: 850;
 }
 
@@ -729,8 +731,8 @@ select {
 
 .sheet-scroll {
   overflow: auto;
-  border: 1px solid #202020;
-  background-color: #fff;
+  border: 1px solid #3d3a34;
+  background-color: #272520;
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
@@ -828,8 +830,8 @@ select {
   max-width: 420px;
   padding: 14px 16px;
   border-radius: 8px;
-  background: #111;
-  color: #fff;
+  background: #3d3a34;
+  color: #e8e0d0;
   opacity: 0;
   transform: translateY(10px);
   transition: 0.2s;
