@@ -1,15 +1,13 @@
-// Firebase se incarca LAZILY — nu blocheaza randarea initiala
-import { firebaseConfig as _fbCfg } from "./js/firebase-config.js";
-
-function isFirebaseConfigured() {
-  return Boolean(_fbCfg?.apiKey && !_fbCfg.apiKey.startsWith("YOUR_"));
-}
-
-let _db = null;
-async function getDb() {
-  if (!_db) _db = await import("./js/db.js");
-  return _db;
-}
+import {
+  initFirebase,
+  isFirebaseConfigured,
+  watchAuth,
+  login,
+  register,
+  logout,
+  subscribeToState,
+  saveStateToCloud,
+} from "./js/db.js";
 
 const storageKey = "cf-cornells-floor-v1";
 const monthNames = ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"];
@@ -134,9 +132,8 @@ function scheduleCloudSave() {
   clearTimeout(saveTimer);
   saveTimer = window.setTimeout(async () => {
     try {
-      const db = await getDb();
       setSyncStatus("Se salveaza in cloud...");
-      await db.saveStateToCloud(currentUser.uid, state);
+      await saveStateToCloud(currentUser.uid, state);
       setSyncStatus(`Sincronizat: ${new Date().toLocaleString("ro-RO")}`);
     } catch (error) {
       setSyncStatus(`Eroare salvare: ${error.message}`);
@@ -859,8 +856,7 @@ async function handleLogin(event) {
   const email = $("#loginEmail").value.trim();
   const password = $("#loginPassword").value;
   try {
-    const db = await getDb();
-    await db.login(email, password);
+    await login(email, password);
     notify("Autentificare reusita.");
   } catch (error) {
     notify(friendlyAuthError(error));
@@ -872,8 +868,7 @@ async function handleRegister(event) {
   const email = $("#registerEmail").value.trim();
   const password = $("#registerPassword").value;
   try {
-    const db = await getDb();
-    await db.register(email, password);
+    await register(email, password);
     notify("Cont creat. Datele se sincronizeaza automat.");
   } catch (error) {
     notify(friendlyAuthError(error));
@@ -886,8 +881,7 @@ async function handleLogout() {
     stateUnsubscribe = null;
   }
   cloudReady = false;
-  const db = await getDb();
-  await db.logout();
+  await logout();
   notify("Delogat.");
 }
 
@@ -942,8 +936,7 @@ async function migrateLocalToCloudIfNeeded() {
   const hasLocalData = Boolean(localStorage.getItem(storageKey));
   if (!hasLocalData) return false;
   const local = loadLocalState();
-  const db = await getDb();
-  await db.saveStateToCloud(currentUser.uid, local);
+  await saveStateToCloud(currentUser.uid, local);
   state = local;
   saveStateLocal();
   notify("Datele locale au fost migrate in cloud.");
@@ -953,10 +946,20 @@ async function migrateLocalToCloudIfNeeded() {
 async function startCloudSync(user) {
   if (stateUnsubscribe) stateUnsubscribe();
   cloudReady = false;
-  setSyncStatus("Se incarca din Firebase...");
+  setSyncStatus("Se sincronizeaza...");
 
-  const db = await getDb();
-  stateUnsubscribe = db.subscribeToState(
+  // Trimite starea locala (cu toate modificarile recente) in cloud
+  // INAINTE sa subscribem — astfel datele locale nu sunt suprascrise
+  const localHasData = Boolean(localStorage.getItem(storageKey));
+  if (localHasData) {
+    try {
+      await saveStateToCloud(user.uid, state);
+    } catch (e) {
+      console.warn("Pre-save failed:", e);
+    }
+  }
+
+  stateUnsubscribe = subscribeToState(
     user.uid,
     async (remoteState) => {
       if (remoteState) {
@@ -970,8 +973,7 @@ async function startCloudSync(user) {
       const migrated = await migrateLocalToCloudIfNeeded();
       if (!migrated) {
         state = createDefaultState();
-        const db2 = await getDb();
-        await db2.saveStateToCloud(user.uid, state);
+        await saveStateToCloud(user.uid, state);
         setSyncStatus("Cont nou — date initiale create in cloud.");
       }
       applyRemoteState(state);
@@ -983,16 +985,15 @@ async function startCloudSync(user) {
   );
 }
 
-async function initAuth() {
+function initAuth() {
   if (!isFirebaseConfigured()) {
     setAuthGateVisible(false);
     renderAccountPanel();
     return;
   }
 
-  const db = await getDb();
-  db.initFirebase();
-  db.watchAuth(async (user) => {
+  initFirebase();
+  watchAuth(async (user) => {
     currentUser = user;
     renderAccountPanel();
 
