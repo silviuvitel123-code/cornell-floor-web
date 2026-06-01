@@ -259,6 +259,49 @@ body.menu-open {
   background: rgba(247, 183, 25, 0.08);
 }
 
+.nav-has-sub::after {
+  content: " ›";
+  float: right;
+  margin-right: 14px;
+  transition: transform 0.25s;
+  display: inline-block;
+}
+
+.nav-has-sub.sub-open::after {
+  transform: rotate(90deg);
+}
+
+.nav-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 4px 14px;
+  padding-left: 14px;
+  border-left: 2px solid rgba(247, 183, 25, 0.25);
+}
+
+.nav-submenu[hidden] { display: none; }
+
+.nav-sub-item {
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  padding: 7px 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  transition: color 0.2s;
+}
+
+.nav-sub-item:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .main-nav button:focus-visible,
 .brand:focus-visible,
 .alert-icon:focus-visible,

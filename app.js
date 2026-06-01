@@ -677,9 +677,54 @@ function renderPrintWorkerRows(worker, nr, dates) {
   `;
 }
 
+function renderSitesSubmenu() {
+  const sub = $("#sitesSubmenu");
+  if (!sub) return;
+  sub.innerHTML = state.sites.map((site) => `
+    <button class="nav-sub-item" data-view="sites" title="${escapeAttr(site.name)}">
+      ${escapeHtml(site.name)}
+    </button>
+  `).join("") || `<span class="nav-sub-item" style="opacity:.4;cursor:default">Niciun santier</span>`;
+  sub.querySelectorAll("[data-view]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      showView("sites");
+      closeSitesSubmenu();
+    });
+  });
+}
+
+function closeSitesSubmenu() {
+  const btn = $("#sitesNavBtn");
+  const sub = $("#sitesSubmenu");
+  if (btn) btn.classList.remove("sub-open", "active");
+  if (sub) sub.hidden = true;
+}
+
 function bindEvents() {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => showView(button.dataset.view));
+  });
+
+  // Santiere dropdown toggle
+  const sitesNavBtn = $("#sitesNavBtn");
+  if (sitesNavBtn) {
+    sitesNavBtn.addEventListener("click", () => {
+      const sub = $("#sitesSubmenu");
+      const isOpen = !sub.hidden;
+      if (isOpen) {
+        closeSitesSubmenu();
+      } else {
+        renderSitesSubmenu();
+        sub.hidden = false;
+        sitesNavBtn.classList.add("sub-open", "active");
+        showView("sites");
+      }
+    });
+  }
+
+  // Inchide submenu cand se navigheaza la alta sectiune
+  document.querySelectorAll(".nav-link[data-view]").forEach((btn) => {
+    btn.addEventListener("click", closeSitesSubmenu);
   });
 
   $("#menuBtn").addEventListener("click", toggleMobileNav);
