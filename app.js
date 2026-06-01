@@ -921,15 +921,13 @@ function setAuthGateVisible(visible) {
 function applyRemoteState(remoteState) {
   applyingRemote = true;
   state = remoteState;
-  if (!state.lastTimesheetMonth) {
-    state.lastTimesheetMonth = monthKeyFromIso($("#fromDate")?.value) || currentMonthKey();
-  }
+  // Marcheaza luna ca fiind luna curenta ca sa evitam fillMonth la urmatorul sync
+  state.lastTimesheetMonth = currentMonthKey();
   $("#companyName").value = state.company || "";
   $("#fiscalCode").value = state.fiscalCode || "";
   applyingRemote = false;
-  const rolled = syncTimesheetToCurrentMonth();
   render();
-  if (rolled) scheduleCloudSave();
+  // NU apelam syncTimesheetToCurrentMonth — ar putea reseta zilele cu fillMonth
 }
 
 async function migrateLocalToCloudIfNeeded() {
