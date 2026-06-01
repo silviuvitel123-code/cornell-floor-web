@@ -324,15 +324,16 @@ body.menu-open {
 }
 
 .hero-content {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 2;
-  display: grid;
-  justify-items: center;
-  gap: 26px;
-  max-width: 1120px;
-  margin: 28px auto 0;
-  padding: 0 20px 0 calc(var(--sidebar-w) + 20px);
-  text-align: center;
+  height: 134px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: var(--sidebar-w);
 }
 
 .eyebrow {
@@ -345,10 +346,11 @@ body.menu-open {
 
 .kicker {
   color: var(--yellow);
-  font-size: clamp(32px, 4vw, 56px);
+  font-size: clamp(28px, 3.2vw, 48px);
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 h1 {
