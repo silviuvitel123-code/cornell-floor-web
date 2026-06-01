@@ -21,6 +21,7 @@ let stateUnsubscribe = null;
 let currentUser = null;
 let cloudReady = false;
 let applyingRemote = false;
+let selectedDate = "";
 let state = createDefaultState();
 
 function todayIso() {
@@ -35,6 +36,48 @@ function monthStartIso() {
 function monthEndIso() {
   const date = new Date();
   return formatIso(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+}
+
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthKeyFromIso(iso) {
+  if (!iso) return "";
+  return iso.slice(0, 7);
+}
+
+function setTimesheetRange(from, to) {
+  const fromInput = $("#fromDate");
+  const toInput = $("#toDate");
+  if (fromInput) fromInput.value = from;
+  if (toInput) toInput.value = to;
+}
+
+function syncTimesheetToCurrentMonth(options = {}) {
+  const monthKey = currentMonthKey();
+  const from = monthStartIso();
+  const to = monthEndIso();
+  const fromInput = $("#fromDate")?.value;
+  const toInput = $("#toDate")?.value;
+  const inputsMatch = fromInput === from && toInput === to;
+  const storedMonth = state.lastTimesheetMonth || monthKeyFromIso(fromInput);
+  const monthChanged = storedMonth && storedMonth !== monthKey;
+
+  if (!monthChanged && inputsMatch && !options.force) return false;
+
+  setTimesheetRange(from, to);
+  state.workers.forEach((worker) => {
+    if (worker.active !== false) fillMonth(worker);
+  });
+  state.lastTimesheetMonth = monthKey;
+
+  if (options.notifyUser && monthChanged) {
+    const [, month] = monthKey.split("-");
+    notify(`Pontajul a trecut automat la luna ${monthNames[Number(month) - 1]}.`);
+  }
+  return true;
 }
 
 function createDefaultState() {
@@ -57,6 +100,7 @@ function createDefaultState() {
       { id: uid(), type: "Santier", text: "Hala Otopeni are progres sub plan.", severity: "danger" },
       { id: uid(), type: "Documente", text: "Vor urma notificari din modulele viitoare.", severity: "ok" },
     ],
+    lastTimesheetMonth: currentMonthKey(),
   };
 }
 
@@ -187,6 +231,22 @@ function setDay(worker, iso, mode) {
   if (mode === "0h") worker.days[iso] = { in: "", pause: "", out: "", hours: "" };
 }
 
+function formatDateLabel(iso) {
+  try {
+    return new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long" }).format(parseDate(iso));
+  } catch {
+    return iso;
+  }
+}
+
+function clearWorkerRange(worker, from, to) {
+  eachDate(from, to).forEach((iso) => {
+    if (!isWeekendIso(iso)) {
+      worker.days[iso] = { in: "", pause: "", out: "", hours: "" };
+    }
+  });
+}
+
 function fillMonth(worker) {
   const now = new Date();
   const year = now.getFullYear();
@@ -278,12 +338,20 @@ function renderSites() {
 function renderWorkers() {
   const engineer = state.workers.find((worker) => worker.isEngineer);
   const today = todayIso();
+  const sel = selectedDate || today;
   const engineerDay = getDay(engineer, today);
   $("#selfTodayStatus").textContent = engineerDay.hours === "CO" ? "CO azi" : engineerDay.hours ? `${engineerDay.in} - ${engineerDay.out}, ${engineerDay.hours}h` : "Nepontat azi";
   $("#selfHoursMonth").textContent = `${engineerMonthHours()} ore luna aceasta`;
 
+  const isToday = sel === today;
+  const dateLabel = isToday ? "azi" : formatDateLabel(sel);
+  const punchBtn = $("#punchEngineerDay");
+  const coBtn = $("#markEngineerCo");
+  if (punchBtn) punchBtn.textContent = `Ponteaza ${dateLabel} 08:00-17:00`;
+  if (coBtn) coBtn.textContent = `CO ${dateLabel}`;
+
   $("#workerList").innerHTML = state.workers.map((worker) => {
-    const day = getDay(worker, today);
+    const day = getDay(worker, sel);
     return `
       <article class="worker-row">
         <div class="worker-top">
@@ -301,7 +369,8 @@ function renderWorkers() {
         </div>
         <div class="worker-actions">
           <button class="mini-btn" data-toggle-worker="${worker.id}">${worker.active ? "Scoate din echipa" : "Reactiveaza"}</button>
-          ${worker.isEngineer ? "" : `<button class="mini-btn" data-remove-worker="${worker.id}">Sterge</button>`}
+          <button class="mini-btn" data-clear-worker="${worker.id}">Sterge luna</button>
+          ${worker.isEngineer ? "" : `<button class="mini-btn" data-remove-worker="${worker.id}">Sterge persoana</button>`}
         </div>
       </article>
     `;
@@ -629,6 +698,7 @@ function bindEvents() {
 
   $("#fromDate").value = monthStartIso();
   $("#toDate").value = monthEndIso();
+  state.lastTimesheetMonth = currentMonthKey();
   $("#companyName").value = state.company;
   $("#fiscalCode").value = state.fiscalCode;
 
@@ -636,9 +706,17 @@ function bindEvents() {
     $(`#${id}`).addEventListener("input", () => {
       state.company = $("#companyName").value;
       state.fiscalCode = $("#fiscalCode").value;
+      if (id === "fromDate" || id === "toDate") {
+        state.lastTimesheetMonth = monthKeyFromIso($("#fromDate").value);
+      }
       renderSheetPreview();
       saveState();
     });
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || !appReady) return;
+    if (syncTimesheetToCurrentMonth({ notifyUser: true })) render();
   });
 
   $("#workerForm").addEventListener("submit", (event) => {
@@ -656,11 +734,14 @@ function bindEvents() {
     const punch = event.target.closest("[data-worker-day]");
     const toggle = event.target.closest("[data-toggle-worker]");
     const remove = event.target.closest("[data-remove-worker]");
+    const clearW = event.target.closest("[data-clear-worker]");
     if (punch) {
       const worker = state.workers.find((item) => item.id === punch.dataset.workerDay);
-      setDay(worker, todayIso(), punch.dataset.mode);
+      const date = selectedDate || todayIso();
+      setDay(worker, date, punch.dataset.mode);
       render();
-      notify("Pontajul de azi a fost actualizat.");
+      const lbl = date === todayIso() ? "azi" : formatDateLabel(date);
+      notify(`Pontajul pentru ${lbl} a fost actualizat.`);
     }
     if (toggle) {
       const worker = state.workers.find((item) => item.id === toggle.dataset.toggleWorker);
@@ -672,6 +753,16 @@ function bindEvents() {
       state.workers = state.workers.filter((item) => item.id !== remove.dataset.removeWorker);
       render();
       notify("Muncitor sters.");
+    }
+    if (clearW) {
+      const worker = state.workers.find((item) => item.id === clearW.dataset.clearWorker);
+      const from = $("#fromDate").value;
+      const to = $("#toDate").value;
+      if (from && to && confirm(`Stergi pontajul lui ${worker.name} pentru intervalul selectat?`)) {
+        clearWorkerRange(worker, from, to);
+        render();
+        notify(`Pontajul lui ${worker.name} a fost sters.`);
+      }
     }
   });
 
@@ -687,22 +778,46 @@ function bindEvents() {
 
   $("#punchEngineerDay").addEventListener("click", () => {
     const engineer = state.workers.find((worker) => worker.isEngineer);
-    setDay(engineer, todayIso(), "8h");
+    const date = selectedDate || todayIso();
+    setDay(engineer, date, "8h");
     render();
-    notify("Inginer pontat azi.");
+    const lbl = date === todayIso() ? "azi" : formatDateLabel(date);
+    notify(`Inginer pontat ${lbl}.`);
   });
 
   $("#markEngineerCo").addEventListener("click", () => {
     const engineer = state.workers.find((worker) => worker.isEngineer);
-    setDay(engineer, todayIso(), "CO");
+    const date = selectedDate || todayIso();
+    setDay(engineer, date, "CO");
     render();
-    notify("Inginer marcat CO azi.");
+    const lbl = date === todayIso() ? "azi" : formatDateLabel(date);
+    notify(`Inginer marcat CO ${lbl}.`);
   });
 
   $("#fillAllBtn").addEventListener("click", () => {
     state.workers.forEach(fillMonth);
     render();
     notify("Luna a fost completata pentru toti.");
+  });
+
+  const pontajDate = $("#pontajDate");
+  if (pontajDate) {
+    selectedDate = todayIso();
+    pontajDate.value = selectedDate;
+    pontajDate.addEventListener("change", () => {
+      selectedDate = pontajDate.value || todayIso();
+      renderWorkers();
+    });
+  }
+
+  $("#clearRangeBtn")?.addEventListener("click", () => {
+    const from = $("#fromDate").value;
+    const to = $("#toDate").value;
+    if (!from || !to) { notify("Selecteaza mai intai intervalul de date."); return; }
+    if (!confirm("Stergi pontajul TUTUROR muncitorilor pentru intervalul selectat?")) return;
+    state.workers.forEach((worker) => clearWorkerRange(worker, from, to));
+    render();
+    notify("Pontajul a fost sters pentru toti.");
   });
 
   $("#generatePdfBtn").addEventListener("click", generatePdf);
@@ -806,10 +921,15 @@ function setAuthGateVisible(visible) {
 function applyRemoteState(remoteState) {
   applyingRemote = true;
   state = remoteState;
+  if (!state.lastTimesheetMonth) {
+    state.lastTimesheetMonth = monthKeyFromIso($("#fromDate")?.value) || currentMonthKey();
+  }
   $("#companyName").value = state.company || "";
   $("#fiscalCode").value = state.fiscalCode || "";
   applyingRemote = false;
+  const rolled = syncTimesheetToCurrentMonth();
   render();
+  if (rolled) scheduleCloudSave();
 }
 
 async function migrateLocalToCloudIfNeeded() {
@@ -888,11 +1008,13 @@ async function bootstrap() {
 
   if (!isFirebaseConfigured()) {
     state = loadLocalState();
+    if (!state.lastTimesheetMonth) state.lastTimesheetMonth = currentMonthKey();
     appReady = true;
     $("#fromDate").value = monthStartIso();
     $("#toDate").value = monthEndIso();
     $("#companyName").value = state.company;
     $("#fiscalCode").value = state.fiscalCode;
+    syncTimesheetToCurrentMonth({ notifyUser: true });
     render();
     initAuth();
     initHeroSlider();
@@ -937,6 +1059,10 @@ function showView(id, options = {}) {
   $(`#${id}`).classList.add("active");
   closeMobileNav();
 
+  if (id === "timesheets") {
+    syncTimesheetToCurrentMonth({ notifyUser: true });
+  }
+
   const scrollTarget = options.scrollTo ? $(options.scrollTo) : $(".workspace");
   scrollTarget?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -967,8 +1093,6 @@ function escapeHtml(value) {
 function escapeAttr(value) {
   return escapeHtml(value).replaceAll("'", "&#039;");
 }
-
-bindEvents();
 
 function initHeroSlider() {
   const slides = document.querySelectorAll(".hero-slide");

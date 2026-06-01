@@ -603,6 +603,39 @@ select {
   color: #111;
 }
 
+.pontaj-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 20px 60px rgba(17, 24, 39, 0.12);
+  flex-wrap: wrap;
+}
+
+.pontaj-tools label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.pontaj-tools input[type="date"] {
+  min-height: 42px;
+  padding: 0 12px;
+  width: auto;
+  min-width: 165px;
+  font-weight: 700;
+  border: 2px solid var(--yellow);
+  border-radius: 8px;
+}
+
 .timesheet-console {
   display: grid;
   grid-template-columns: minmax(280px, 0.75fr) minmax(420px, 1.2fr) minmax(360px, 0.9fr);

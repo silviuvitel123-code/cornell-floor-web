@@ -1,4 +1,4 @@
-const CACHE_NAME = "cf-cornells-floor-v5";
+const CACHE_NAME = "cf-cornells-floor-v6";
 const ASSETS = [
   "./",
   "./index.html",
