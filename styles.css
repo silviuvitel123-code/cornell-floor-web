@@ -330,12 +330,11 @@ body.menu-open {
   justify-items: center;
   gap: 26px;
   max-width: 1120px;
-  margin: 60px auto 0;
+  margin: 28px auto 0;
   padding: 0 20px 0 calc(var(--sidebar-w) + 20px);
   text-align: center;
 }
 
-.kicker,
 .eyebrow {
   color: var(--yellow);
   font-size: 14px;
@@ -345,7 +344,11 @@ body.menu-open {
 }
 
 .kicker {
-  font-size: 24px;
+  color: var(--yellow);
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 h1 {
