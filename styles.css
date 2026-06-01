@@ -732,10 +732,11 @@ select {
 .sheet-scroll {
   overflow: auto;
   border: 1px solid #3d3a34;
-  background-color: #272520;
+  /* Foaia de pontaj ramane alba — e un document */
+  background-color: #fff;
   background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    linear-gradient(#dcdcdc 1px, transparent 1px),
+    linear-gradient(90deg, #dcdcdc 1px, transparent 1px);
   background-size: 105px 28px;
 }
 
@@ -743,7 +744,8 @@ select {
   min-width: 1850px;
   border-collapse: collapse;
   table-layout: fixed;
-  background: rgba(255, 255, 255, 0.93);
+  background: #fff;
+  color: #111;
   font-family: Arial, sans-serif;
 }
 
@@ -760,7 +762,8 @@ select {
 .timesheet .month-row td {
   height: 30px;
   border-color: transparent;
-  background: rgba(255, 255, 255, 0.82);
+  background: #fff;
+  color: #111;
   text-align: left;
   font-size: 22px;
   font-weight: 900;
@@ -805,7 +808,7 @@ select {
 }
 
 .timesheet .weekend {
-  background: var(--weekend);
+  background: #6ea6df;
   color: #06192c;
   font-size: 20px;
 }
@@ -819,6 +822,7 @@ select {
   padding: 0;
   text-align: center;
   background: transparent;
+  color: #111;
   font-size: 14px;
 }
 
