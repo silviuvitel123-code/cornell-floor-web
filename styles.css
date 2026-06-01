@@ -302,6 +302,17 @@ body.menu-open {
   color: rgba(255, 255, 255, 0.9);
 }
 
+.nav-sub-item.nav-sub-active {
+  color: var(--yellow);
+}
+
+.site-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-top: 4px;
+}
+
 .main-nav button:focus-visible,
 .brand:focus-visible,
 .alert-icon:focus-visible,

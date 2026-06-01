@@ -22,6 +22,7 @@ let currentUser = null;
 let cloudReady = false;
 let applyingRemote = false;
 let selectedDate = "";
+let currentSiteId = null;
 let state = createDefaultState();
 
 function todayIso() {
@@ -680,17 +681,78 @@ function renderPrintWorkerRows(worker, nr, dates) {
 function renderSitesSubmenu() {
   const sub = $("#sitesSubmenu");
   if (!sub) return;
+  if (!state.sites.length) {
+    sub.innerHTML = `<span class="nav-sub-item" style="opacity:.4;cursor:default">Niciun santier</span>`;
+    return;
+  }
   sub.innerHTML = state.sites.map((site) => `
-    <button class="nav-sub-item" data-view="sites" title="${escapeAttr(site.name)}">
+    <button class="nav-sub-item ${currentSiteId === site.id ? "nav-sub-active" : ""}"
+            data-site-id="${escapeAttr(site.id)}"
+            title="${escapeAttr(site.name)}">
       ${escapeHtml(site.name)}
     </button>
-  `).join("") || `<span class="nav-sub-item" style="opacity:.4;cursor:default">Niciun santier</span>`;
-  sub.querySelectorAll("[data-view]").forEach((btn) => {
+  `).join("");
+  sub.querySelectorAll("[data-site-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      showView("sites");
-      closeSitesSubmenu();
+      showSiteDetail(btn.dataset.siteId);
     });
   });
+}
+
+function showSiteDetail(siteId) {
+  currentSiteId = siteId;
+  // Arata view-ul site-detail fara sa inchida dropdown-ul
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  document.querySelectorAll(".nav-link").forEach((l) => {
+    l.classList.remove("active");
+    l.removeAttribute("aria-current");
+  });
+  $("#site-detail").classList.add("active");
+  // Pastreaza Santiere activ vizual + dropdown deschis
+  const sitesBtn = $("#sitesNavBtn");
+  if (sitesBtn) { sitesBtn.classList.add("active", "sub-open"); }
+  // Highlight santier selectat in dropdown
+  renderSiteDetailContent();
+  renderSitesSubmenu();
+  $(".workspace").scrollIntoView({ behavior: "smooth" });
+}
+
+function renderSiteDetailContent() {
+  const el = $("#site-detail");
+  if (!el) return;
+  const site = state.sites.find((s) => s.id === currentSiteId);
+  if (!site) {
+    el.innerHTML = `<p class="muted">Santierul nu a fost gasit.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="section-title row">
+      <div>
+        <p class="eyebrow">Santier</p>
+        <h2>${escapeHtml(site.name)}</h2>
+        <p class="muted">${escapeHtml(site.location)} &nbsp;|&nbsp; ${escapeHtml(site.status)}</p>
+      </div>
+      <span class="pill">${site.progress}% progres</span>
+    </div>
+    <div class="site-detail-grid">
+      <div class="panel empty-module">
+        <p class="eyebrow">Lucrari</p>
+        <p class="muted" style="margin-top:8px">In curand &mdash; lista lucrari executate</p>
+      </div>
+      <div class="panel empty-module">
+        <p class="eyebrow">Materiale</p>
+        <p class="muted" style="margin-top:8px">In curand &mdash; gestiune materiale</p>
+      </div>
+      <div class="panel empty-module">
+        <p class="eyebrow">Documente</p>
+        <p class="muted" style="margin-top:8px">In curand &mdash; fisiere si procese verbale</p>
+      </div>
+      <div class="panel empty-module">
+        <p class="eyebrow">Echipa</p>
+        <p class="muted" style="margin-top:8px">In curand &mdash; muncitori alocati</p>
+      </div>
+    </div>
+  `;
 }
 
 function closeSitesSubmenu() {
