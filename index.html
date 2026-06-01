@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#060708" />
+    <meta
+      name="description"
+      content="Panou inginer: santiere active, pontaje, alerte si rapoarte pentru Cornell's Floor."
+    />
+    <title>CF Cornell's Floor - Engineer Desk</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Sari la continut</a>
+
+    <div class="auth-gate" id="authGate" hidden>
+      <div class="auth-card">
+        <p class="eyebrow">Firebase</p>
+        <h2>Autentificare Cornell's Floor</h2>
+        <p class="muted auth-lead">Conecteaza-te pentru sincronizare automata intre laptop si telefon.</p>
+
+        <form id="loginForm" class="auth-form">
+          <label>Email
+            <input id="loginEmail" type="email" autocomplete="username" required />
+          </label>
+          <label>Parola
+            <input id="loginPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="yellow-btn" type="submit">Intra in cont</button>
+        </form>
+
+        <form id="registerForm" class="auth-form" hidden>
+          <label>Email
+            <input id="registerEmail" type="email" autocomplete="username" required />
+          </label>
+          <label>Parola (min. 6 caractere)
+            <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required />
+          </label>
+          <button class="yellow-btn" type="submit">Creeaza cont</button>
+        </form>
+
+        <div class="auth-switch">
+          <button class="outline-btn" type="button" id="showRegisterBtn">Nu ai cont? Inregistrare</button>
+          <button class="outline-btn" type="button" id="showLoginBtn" hidden>Ai deja cont? Autentificare</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="hero-shell">
+      <div class="hero-slides" aria-hidden="true">
+        <div class="hero-slide active" data-idx="0"></div>
+        <div class="hero-slide" data-idx="1"></div>
+        <div class="hero-slide" data-idx="2"></div>
+        <div class="hero-slide" data-idx="3"></div>
+        <div class="hero-slide" data-idx="4"></div>
+      </div>
+      <header class="site-header">
+        <button class="brand" data-view="home" aria-label="Acasa">
+          <span class="brand-mark">CF</span>
+          <span class="brand-text">Cornell's <b>Floor</b></span>
+        </button>
+        <div class="nav-overlay" id="navOverlay" hidden></div>
+        <nav class="main-nav" id="mainNav" aria-label="Navigatie principala">
+          <button class="nav-link active" data-view="home" aria-current="page">Home page</button>
+          <button class="nav-link" data-view="sites">Santiere</button>
+          <button class="nav-link" data-view="timesheets">Pontaje</button>
+          <button class="nav-link" data-view="reports">Rapoarte</button>
+          <button class="nav-link" data-view="other">Altele</button>
+        </nav>
+        <div class="header-tools">
+          <button
+            class="alert-icon"
+            id="alertIconBtn"
+            type="button"
+            aria-label="Notificari si alerte"
+            title="Notificari"
+          >
+            <span id="alertBadge" aria-hidden="true">0</span>
+          </button>
+          <button
+            class="menu-btn"
+            id="menuBtn"
+            type="button"
+            aria-label="Deschide meniul"
+            aria-expanded="false"
+            aria-controls="mainNav"
+            title="Meniu"
+          >
+            <i></i><i></i><i></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="hero-content">
+        <p class="kicker">• Engineer command desk</p>
+        <h1>Data sumare pentru Ing. Vitel Silviu</h1>
+        <p class="hero-copy">Santiere active, progres, alerte, pontaje si rapoarte intr-un singur panou de lucru.</p>
+        <button class="hero-btn" data-view="timesheets">Deschide pontaje ↗</button>
+      </div>
+
+      <div class="preview-strip" aria-hidden="true">
+        <div class="preview-card site-mini"></div>
+        <div class="preview-card dashboard-mini"></div>
+        <div class="preview-card sheet-mini"></div>
+      </div>
+    </section>
+
+    <main class="workspace" id="workspace">
+      <section class="view active" id="home">
+        <div class="section-title">
+          <p class="eyebrow">Home page</p>
+          <h2>Data sumare ale inginerului</h2>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid"></div>
+
+        <div class="home-layout">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Santiere active</h3>
+              <button class="outline-btn" data-view="sites">Editeaza santiere</button>
+            </div>
+            <div class="site-list" id="homeSites"></div>
+          </section>
+
+          <section class="panel alerts-panel">
+            <div class="panel-head">
+              <h3>Notificari si alerte</h3>
+              <button class="outline-btn" data-view="other">Setari</button>
+            </div>
+            <div class="alert-list" id="homeAlerts" tabindex="-1"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="sites">
+        <div class="section-title row">
+          <div>
+            <p class="eyebrow">Santiere</p>
+            <h2>Lista santiere si progres</h2>
+          </div>
+          <button class="yellow-btn" id="addSiteBtn">Adauga santier</button>
+        </div>
+        <div class="site-editor" id="siteEditor"></div>
+      </section>
+
+      <section class="view" id="timesheets">
+        <div class="section-title row">
+          <div>
+            <p class="eyebrow">Pontaje</p>
+            <h2>Pontaj inginer si muncitori</h2>
+          </div>
+          <button class="yellow-btn" id="generatePdfBtn">Genereaza PDF</button>
+        </div>
+
+        <div class="timesheet-console">
+          <section class="self-card">
+            <p class="eyebrow">Pontaj personal</p>
+            <h3>Ing. Vitel Silviu</h3>
+            <div class="self-status">
+              <span id="selfTodayStatus">Nepontat azi</span>
+              <strong id="selfHoursMonth">0 ore luna aceasta</strong>
+            </div>
+            <div class="punch-actions">
+              <button class="yellow-btn" id="punchEngineerDay">Ponteaza azi 08:00-17:00</button>
+              <button class="outline-btn" id="markEngineerCo">CO azi</button>
+            </div>
+          </section>
+
+          <section class="worker-card">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Echipa</p>
+                <h3>Muncitori in pontaj</h3>
+              </div>
+              <button class="outline-btn" id="fillAllBtn">Completeaza luna</button>
+            </div>
+            <form id="workerForm" class="worker-form">
+              <label class="sr-only" for="workerName">Nume si prenume</label>
+              <input id="workerName" name="name" placeholder="Nume si prenume" autocomplete="name" required />
+              <label class="sr-only" for="workerCard">Card / functie</label>
+              <input id="workerCard" name="card" placeholder="Card / functie" autocomplete="off" />
+              <button class="dark-btn" type="submit">Adauga</button>
+            </form>
+            <div class="worker-list" id="workerList"></div>
+          </section>
+
+          <section class="generator-card">
+            <p class="eyebrow">Generator foaie</p>
+            <h3>Interval pontaj</h3>
+            <div class="generator-grid">
+              <label>De la
+                <input id="fromDate" type="date" />
+              </label>
+              <label>Pana la
+                <input id="toDate" type="date" />
+              </label>
+              <label>Societate
+                <input id="companyName" autocomplete="organization" />
+              </label>
+              <label>Cod fiscal
+                <input id="fiscalCode" autocomplete="off" inputmode="numeric" />
+              </label>
+            </div>
+            <p class="hint">PDF-ul se genereaza in formatul foii colective: antet, portocaliu pentru cap de tabel, albastru pentru weekend, ore pe zile si oameni.</p>
+          </section>
+        </div>
+
+        <section class="sheet-frame">
+          <div class="sheet-scroll">
+            <table class="timesheet" id="timesheetPreview"></table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="reports">
+        <div class="section-title">
+          <p class="eyebrow">Rapoarte</p>
+          <h2>Rapoarte de santier</h2>
+        </div>
+        <div class="empty-module">
+          <h3>Urmeaza sa definim rapoartele</h3>
+          <p>Aici vom adauga rapoarte zilnice, situatii lucrari, materiale si costuri.</p>
+        </div>
+      </section>
+
+      <section class="view" id="other">
+        <div class="section-title">
+          <p class="eyebrow">Altele</p>
+          <h2>Module viitoare</h2>
+        </div>
+        <div class="cloud-layout">
+          <div class="empty-module">
+            <h3>Spatiu pentru categorii noi</h3>
+            <p>Notificari, documente, receptii, utilaje, materiale si alte capitole pot fi introduse aici.</p>
+          </div>
+          <section class="cloud-card">
+            <p class="eyebrow">Cont si cloud</p>
+            <h3>Firebase + sincronizare</h3>
+            <p class="muted" id="accountMode">Se verifica configuratia...</p>
+            <p><strong id="accountEmail">—</strong></p>
+            <div class="cloud-actions">
+              <button class="dark-btn" type="button" id="logoutBtn">Delogare</button>
+            </div>
+            <p class="hint" id="syncStatus">Asteptare sincronizare...</p>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

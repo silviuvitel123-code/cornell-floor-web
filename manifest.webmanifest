@@ -1,0 +1,18 @@
+{
+  "name": "CF Cornell's Floor",
+  "short_name": "CF Floor",
+  "description": "Engineer desk pentru santiere, pontaje si rapoarte.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#060708",
+  "theme_color": "#060708",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

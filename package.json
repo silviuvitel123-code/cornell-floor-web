@@ -1,0 +1,8 @@
+{
+  "name": "santier-manager-pro",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-config.mjs",
+    "vercel-build": "node scripts/build-config.mjs"
+  }
+}
