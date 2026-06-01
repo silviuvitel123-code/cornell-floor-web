@@ -717,6 +717,21 @@ function showSiteDetail(siteId) {
   $(".workspace").scrollIntoView({ behavior: "smooth" });
 }
 
+const SITE_CHAPTERS = [
+  { key: "proiect-tehnic",      icon: "📐", title: "Proiect tehnic",            desc: "Planuri de executie, memorii tehnice, detalii de constructie si toate documentele de proiectare." },
+  { key: "liste-cantitati",     icon: "📊", title: "Liste Cantități",           desc: "Devize, antemasuratoare, centralizatoare de cantitati si situatii comparative." },
+  { key: "documente-santier",   icon: "📁", title: "Documente santier",         desc: "Contracte, autorizatii de construire, notificari ISC si alte acte administrative." },
+  { key: "procese-verbale",     icon: "📋", title: "Procese verbale",           desc: "PV de receptie, lucrari ascunse, faze determinante si predare-primire teren." },
+  { key: "condica-betoane",     icon: "🏗️", title: "Condică betoane",           desc: "Registru de turnari beton, retete aprobate, cubaje si certificate de conformitate." },
+  { key: "dispozitii-santier",  icon: "📝", title: "Dispoziții de santier",     desc: "Dispozitii emise si primite de la proiectant, beneficiar sau diriginte de santier." },
+  { key: "situatii-lucrari",    icon: "📈", title: "Situații de lucrări",       desc: "Situatii de plata lunare, centralizatoare si documente pentru decontare." },
+  { key: "progres-santier",     icon: "🎯", title: "Progres santier",           desc: "Grafic de executie, stadiu fizic, rapoarte saptamanale si fotografii de progres." },
+  { key: "carte-tehnica",       icon: "📚", title: "Carte tehnică",             desc: "Cartea constructiei, instructiuni de exploatare si intretinere, garantii." },
+  { key: "avize-calitate",      icon: "✅", title: "Avize + Documente calitate", desc: "Certificate de calitate, buletine de incercari, agremente tehnice si declaratii de performanta." },
+];
+
+let currentChapterIdx = 0;
+
 function renderSiteDetailContent() {
   const el = $("#site-detail");
   if (!el) return;
@@ -725,8 +740,9 @@ function renderSiteDetailContent() {
     el.innerHTML = `<p class="muted">Santierul nu a fost gasit.</p>`;
     return;
   }
+  const ch = SITE_CHAPTERS[currentChapterIdx];
   el.innerHTML = `
-    <div class="section-title row">
+    <div class="section-title row" style="margin-bottom:20px">
       <div>
         <p class="eyebrow">Santier</p>
         <h2>${escapeHtml(site.name)}</h2>
@@ -734,25 +750,29 @@ function renderSiteDetailContent() {
       </div>
       <span class="pill">${site.progress}% progres</span>
     </div>
-    <div class="site-detail-grid">
-      <div class="panel empty-module">
-        <p class="eyebrow">Lucrari</p>
-        <p class="muted" style="margin-top:8px">In curand &mdash; lista lucrari executate</p>
-      </div>
-      <div class="panel empty-module">
-        <p class="eyebrow">Materiale</p>
-        <p class="muted" style="margin-top:8px">In curand &mdash; gestiune materiale</p>
-      </div>
-      <div class="panel empty-module">
-        <p class="eyebrow">Documente</p>
-        <p class="muted" style="margin-top:8px">In curand &mdash; fisiere si procese verbale</p>
-      </div>
-      <div class="panel empty-module">
-        <p class="eyebrow">Echipa</p>
-        <p class="muted" style="margin-top:8px">In curand &mdash; muncitori alocati</p>
+    <div class="site-d5-layout">
+      <nav class="site-chapters-nav">
+        ${SITE_CHAPTERS.map((c, i) => `
+          <button class="chapter-item ${i === currentChapterIdx ? "active" : ""}" data-ch="${i}">
+            <span class="ch-num">${String(i + 1).padStart(2, "0")}</span>
+            <span class="ch-text">${escapeHtml(c.title)}</span>
+          </button>
+        `).join("")}
+      </nav>
+      <div class="site-chapter-preview">
+        <div class="ch-preview-icon">${ch.icon}</div>
+        <div class="ch-preview-title">${escapeHtml(ch.title)}</div>
+        <div class="ch-preview-desc">${escapeHtml(ch.desc)}</div>
+        <button class="yellow-btn ch-open-btn" data-ch="${currentChapterIdx}">Deschide &rarr;</button>
       </div>
     </div>
   `;
+  el.querySelectorAll("[data-ch]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentChapterIdx = Number(btn.dataset.ch);
+      renderSiteDetailContent();
+    });
+  });
 }
 
 function closeSitesSubmenu() {
