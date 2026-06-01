@@ -173,12 +173,16 @@ body.menu-open {
 .site-header {
   position: relative;
   z-index: 2;
-  min-height: 142px;
-  display: grid;
-  grid-template-columns: 410px 1fr 190px;
-  align-items: center;
-  gap: 24px;
-  padding: 0 38px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 36px 38px 24px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
 .brand {
@@ -211,28 +215,31 @@ body.menu-open {
 
 .main-nav {
   display: flex;
-  justify-content: center;
-  gap: 34px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .main-nav button {
   border: 0;
+  border-left: 3px solid transparent;
   background: transparent;
-  color: #f7f7f7;
-  font-size: 23px;
-  font-weight: 650;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: left;
+  padding: 7px 0 7px 16px;
+  letter-spacing: 0.01em;
+  transition: color 0.2s, border-color 0.2s;
 }
 
 .main-nav button::after {
-  content: "⌄";
-  margin-left: 10px;
-  font-size: 18px;
+  content: none;
 }
 
 .main-nav button.active,
 .main-nav button:hover {
   color: var(--yellow);
+  border-left-color: var(--yellow);
 }
 
 .main-nav button:focus-visible,
@@ -306,7 +313,7 @@ body.menu-open {
   justify-items: center;
   gap: 26px;
   max-width: 1120px;
-  margin: 118px auto 0;
+  margin: 60px auto 0;
   padding: 0 20px;
   text-align: center;
 }
