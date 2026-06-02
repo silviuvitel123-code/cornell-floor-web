@@ -144,9 +144,6 @@ function scheduleCloudSave() {
 }
 
 function saveState() {
-  const ts = Date.now();
-  state.savedAt = ts;
-  localStorage.setItem("cf-last-edit", ts.toString()); // separat de state
   scheduleCloudSave();
 }
 
@@ -1072,26 +1069,13 @@ function setAuthGateVisible(visible) {
 }
 
 function applyRemoteState(remoteState) {
-  // cf-last-edit e setat DOAR cand userul face modificari explicite (saveState)
-  // Nu e niciodata setat de render() sau alte operatii automate
-  const localEditTs = Number(localStorage.getItem("cf-last-edit") || 0);
-  const remoteTs = remoteState.savedAt || 0;
-
-  if (localEditTs > 0 && localEditTs > remoteTs) {
-    // Userul a facut modificari pe acest dispozitiv mai recente decat cloud
-    cloudReady = true;
-    state.savedAt = localEditTs;
-    scheduleCloudSave();
-    setSyncStatus("Se actualizeaza cloud-ul cu datele locale...");
-    return;
-  }
-
-  // Cloud e mai nou sau nu am modificat local → aplicam cloud
   applyingRemote = true;
-  state = remoteState;
+  state = { ...remoteState }; // copie, nu referinta directa
   state.lastTimesheetMonth = currentMonthKey();
-  $("#companyName").value = state.company || "";
-  $("#fiscalCode").value = state.fiscalCode || "";
+  const companyEl = $("#companyName");
+  const fiscalEl = $("#fiscalCode");
+  if (companyEl) companyEl.value = state.company || "";
+  if (fiscalEl) fiscalEl.value = state.fiscalCode || "";
   applyingRemote = false;
   render();
 }
@@ -1116,8 +1100,8 @@ async function startCloudSync(user) {
     user.uid,
     async (remoteState) => {
       if (remoteState) {
-        applyRemoteState(remoteState);
-        cloudReady = true;
+        try { applyRemoteState(remoteState); } catch (e) { console.error("sync error:", e); }
+        cloudReady = true; // intotdeauna setat, indiferent de erori
         setSyncStatus(`Sincronizat: ${new Date().toLocaleString("ro-RO")}`);
         return;
       }
