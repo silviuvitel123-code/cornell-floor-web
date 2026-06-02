@@ -122,14 +122,15 @@ body.menu-open {
   z-index: 0;
 }
 
-/* Toate slide-urile: loading vehicle / borrow pit */
+/* Toate slide-urile: loading vehicle / borrow pit — crop 5:2 pentru hero */
 .hero-slide:nth-child(1)::after,
 .hero-slide:nth-child(2)::after,
 .hero-slide:nth-child(3)::after,
 .hero-slide:nth-child(4)::after,
 .hero-slide:nth-child(5)::after {
-  background-image: url("https://plus.unsplash.com/premium_photo-1682142169420-d0ef7507ef01?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://plus.unsplash.com/premium_photo-1682142169420-d0ef7507ef01?auto=format&fit=crop&crop=entropy&w=2400&h=960&q=90");
   background-position: center 50%;
+  background-size: cover;
 }
 
 @keyframes kenburns-in {
