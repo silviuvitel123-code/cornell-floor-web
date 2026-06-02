@@ -159,17 +159,22 @@ function renderAccountPanel() {
   const emailEl = $("#accountEmail");
   const modeEl = $("#accountMode");
   const logoutBtn = $("#logoutBtn");
+  const sidebarLogout = $("#sidebarLogout");
+  const sidebarUser = $("#sidebarUser");
   if (!emailEl || !modeEl) return;
 
   if (!isFirebaseConfigured()) {
     emailEl.textContent = "Firebase neconfigurat";
-    modeEl.textContent = "Datele raman doar in browser (localStorage). Adauga variabilele Firebase pe Vercel.";
+    modeEl.textContent = "Datele raman doar in browser (localStorage).";
     if (logoutBtn) logoutBtn.hidden = true;
+    if (sidebarLogout) sidebarLogout.hidden = true;
     setSyncStatus("Mod local — fara cloud.");
     return;
   }
 
   if (logoutBtn) logoutBtn.hidden = !currentUser;
+  if (sidebarLogout) sidebarLogout.hidden = !currentUser;
+  if (sidebarUser) sidebarUser.textContent = currentUser?.email || "";
 
   if (currentUser) {
     emailEl.textContent = currentUser.email || "Cont activ";
@@ -179,6 +184,7 @@ function renderAccountPanel() {
   } else {
     emailEl.textContent = "Neautentificat";
     modeEl.textContent = "Autentifica-te pentru sync intre dispozitive.";
+    if (sidebarUser) sidebarUser.textContent = "";
   }
 }
 
@@ -953,6 +959,7 @@ function bindEvents() {
 
   $("#generatePdfBtn").addEventListener("click", generatePdf);
   $("#logoutBtn")?.addEventListener("click", handleLogout);
+  $("#sidebarLogout")?.addEventListener("click", handleLogout);
 
   $("#forceSyncBtn")?.addEventListener("click", async () => {
     if (!cloudReady || !currentUser) {

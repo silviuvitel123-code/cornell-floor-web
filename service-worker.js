@@ -1,4 +1,4 @@
-const CACHE_NAME = "cf-cornells-floor-v7";
+const CACHE_NAME = "cf-cornells-floor-v8";
 const PRECACHE = ["./icon.svg", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

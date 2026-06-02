@@ -186,10 +186,45 @@ body.menu-open {
   display: flex;
   flex-direction: column;
   gap: 36px;
-  padding: 36px 22px;
+  padding: 36px 22px 24px;
   background: rgba(4, 5, 6, 0.72);
   backdrop-filter: blur(14px);
   border-right: 1px solid rgba(247, 183, 25, 0.12);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-user {
+  font-size: 12px;
+  color: #9a9080;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-logout {
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: #9a9080;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.sidebar-logout:hover {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.4);
 }
 
 .site-header {
