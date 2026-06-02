@@ -15,10 +15,11 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background: #1c1b18;
   color: var(--ink);
   font-family: Inter, "Segoe UI", Arial, sans-serif;
@@ -57,12 +58,14 @@ h1, h2, h3, p { margin: 0; }
   border: 0;
 }
 
+/* nav-overlay — folosit pe mobil cand sidebar e deschis */
 .nav-overlay {
+  display: block;
   position: fixed;
   inset: 0;
-  z-index: 8;
-  border: 0;
-  background: rgba(4, 6, 8, 0.72);
+  z-index: 22;   /* peste sidebar (25) nu, dar peste content da */
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
   cursor: pointer;
 }
 
@@ -1125,65 +1128,61 @@ body.auth-locked .workspace {
   transition: 0.25s;
 }
 
-/* nav-overlay acoperă toată pagina */
-.nav-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 18;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(2px);
-}
-
 @media (max-width: 900px) {
-  /* Ascunde hamburgherul din header (site-header) pe mobil */
+  /* FAB vizibil, hamburger header ascuns */
   .menu-btn { display: none; }
-
-  /* FAB vizibil */
   .mobile-menu-fab { display: flex; }
 
-  /* Sidebar ascuns implicit pe mobil */
+  /* Sidebar: ascuns la stanga, complet opac, latime buna pt mobil */
   .header-left {
+    width: min(82vw, 300px);
+    height: 100dvh;
+    background: #0d0c0a;                 /* complet opac */
+    border-right: 1px solid rgba(247,183,25,0.2);
     transform: translateX(-100%);
     transition: transform 0.28s ease;
     z-index: 25;
-    box-shadow: 4px 0 32px rgba(0,0,0,0.5);
+    box-shadow: 6px 0 40px rgba(0,0,0,0.7);
+    /* Safe area pentru notch iOS */
+    padding-top: max(48px, env(safe-area-inset-top, 48px));
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
   }
 
-  /* Sidebar vizibil cand meniu e deschis */
+  /* Sidebar deschis */
   body.menu-open .header-left {
     transform: translateX(0);
   }
 
-  /* FAB animat cand e deschis */
+  /* FAB animat in X */
   body.menu-open .mobile-menu-fab i:nth-child(1) { transform: translateY(7px) rotate(45deg); }
   body.menu-open .mobile-menu-fab i:nth-child(2) { opacity: 0; transform: scaleX(0); }
   body.menu-open .mobile-menu-fab i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-  /* Workspace fara padding-left (sidebar nu mai e vizibil permanent) */
+  /* FAB pozitionat pt notch */
+  .mobile-menu-fab {
+    top: max(16px, env(safe-area-inset-top, 16px));
+    right: 16px;
+  }
+
+  /* Workspace si hero fara padding pt sidebar */
   .workspace {
     padding-left: 16px;
     padding-right: 16px;
   }
 
-  /* Hero content fara offset pentru sidebar */
   .hero-content {
     padding-left: 16px;
     padding-right: 16px;
     margin-top: 24px;
   }
 
-  /* Site header tools in dreapta */
   .site-header {
-    padding: 16px 70px 16px 16px;
+    padding: max(16px, env(safe-area-inset-top)) 70px 16px 16px;
   }
 
-  .hero-shell {
-    min-height: 200px;
-  }
+  .hero-shell { min-height: 220px; }
 
-  .kicker {
-    font-size: clamp(18px, 5vw, 32px);
-  }
+  .kicker { font-size: clamp(18px, 5vw, 30px); }
 
   /* Grids la o coloana */
   .home-layout,
