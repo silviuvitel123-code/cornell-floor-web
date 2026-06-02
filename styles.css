@@ -122,33 +122,33 @@ body.menu-open {
   z-index: 0;
 }
 
-/* Slide 1: Buldozer aerian — wide, tot utilajul vizibil */
+/* Slide 1: Excavator galben pe deal, cer albastru — tot utilajul vizibil */
 .hero-slide:nth-child(1)::after {
-  background-image: url("https://images.unsplash.com/photo-1686968719625-3faf853a543e?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 60%;
-}
-
-/* Slide 2: Santier constructie buldozer wide */
-.hero-slide:nth-child(2)::after {
-  background-image: url("https://images.unsplash.com/photo-1691047489143-79b91c648c85?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://images.unsplash.com/photo-1649807479468-40011b31ee09?auto=format&fit=crop&w=2400&q=90");
   background-position: center 55%;
 }
 
-/* Slide 3: Santier constructie cu echipamente aerian */
+/* Slide 2: Excavator galben pe sol, nori albi */
+.hero-slide:nth-child(2)::after {
+  background-image: url("https://images.unsplash.com/photo-1613928270169-4e4462c75a79?auto=format&fit=crop&w=2400&q=90");
+  background-position: center 50%;
+}
+
+/* Slide 3: Excavator langa deal / cariera, dramatic */
 .hero-slide:nth-child(3)::after {
-  background-image: url("https://images.unsplash.com/photo-1723367194881-fe2e53534170?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 50%;
+  background-image: url("https://images.unsplash.com/photo-1505833464198-4993b36cdfab?auto=format&fit=crop&w=2400&q=90");
+  background-position: center 55%;
 }
 
-/* Slide 4: Buldozer sapand teren wide angle */
+/* Slide 4: Silhouette excavator la apus de soare */
 .hero-slide:nth-child(4)::after {
-  background-image: url("https://images.unsplash.com/photo-1683372101272-6a144c795e2a?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://images.unsplash.com/photo-1653315919118-9122a6896706?auto=format&fit=crop&w=2400&q=90");
   background-position: center 50%;
 }
 
-/* Slide 5: Santier cu buldozer aerian wide */
+/* Slide 5: CAT excavator galben, nori si copaci */
 .hero-slide:nth-child(5)::after {
-  background-image: url("https://images.unsplash.com/photo-1689596312049-0a21da693515?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://images.unsplash.com/photo-1503708928676-1cb796a0891e?auto=format&fit=crop&w=2400&q=90");
   background-position: center 55%;
 }
 
