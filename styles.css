@@ -1181,6 +1181,25 @@ body.auth-locked .workspace {
 
   .kicker { font-size: clamp(18px, 5vw, 30px); }
 
+  /* Logo mai mic pe mobil ca sa incapa in sidebar */
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .brand-text {
+    font-size: 22px;
+    white-space: nowrap;
+  }
+
+  /* Nav items vizibile clar pe mobil */
+  .main-nav button {
+    font-size: 18px;
+    padding: 14px 0 14px 16px;
+    color: #e8e0d0;
+  }
+
   /* Grids la o coloana */
   .home-layout,
   .timesheet-console,
