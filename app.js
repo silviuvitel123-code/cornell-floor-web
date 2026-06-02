@@ -807,8 +807,9 @@ function bindEvents() {
         renderSitesSubmenu();
         sub.hidden = false;
         sitesNavBtn.classList.add("sub-open", "active");
-        showView("sites");
       }
+      // Intotdeauna navigheaza la lista santiere
+      showView("sites");
     });
   }
 
