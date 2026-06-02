@@ -80,6 +80,7 @@ body.menu-open {
   overflow: hidden;
   color: #fff;
   background: #060708;
+  margin-left: var(--sidebar-w);
 }
 
 /* ── Slider ── */
