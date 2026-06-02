@@ -1066,15 +1066,16 @@ function applyRemoteState(remoteState) {
   const localTs = state.savedAt || 0;
   const remoteTs = remoteState.savedAt || 0;
 
-  // Daca datele locale sunt mai noi decat cloud → le incarcam in cloud
-  if (localTs > remoteTs) {
+  // Local castiga DOAR daca are timestamp real (> 0) si e mai nou decat cloud
+  // Daca ambele sunt 0 (fara timestamp), cloud castiga intotdeauna
+  if (localTs > 0 && localTs > remoteTs) {
     cloudReady = true;
     scheduleCloudSave();
     setSyncStatus("Se actualizeaza cloud-ul cu datele locale...");
     return;
   }
 
-  // Cloud e mai nou sau la egalitate → aplicam datele din cloud
+  // Cloud castiga → aplicam datele din cloud
   applyingRemote = true;
   state = remoteState;
   state.lastTimesheetMonth = currentMonthKey();
@@ -1159,15 +1160,8 @@ async function bootstrap() {
   registerServiceWorker();
 
   // Render imediat din localStorage — nu asteapta Firebase
-  const hadLocalStorage = Boolean(localStorage.getItem(storageKey));
   state = loadLocalState();
   if (!state.lastTimesheetMonth) state.lastTimesheetMonth = currentMonthKey();
-  // Daca avem date locale salvate anterior fara timestamp, le marcam ca valide
-  // (valoare 1 = "existent inainte", orice save real va fi mult mai mare)
-  if (hadLocalStorage && !state.savedAt) {
-    state.savedAt = 1;
-    saveStateLocal();
-  }
   $("#fromDate").value = monthStartIso();
   $("#toDate").value = monthEndIso();
   $("#companyName").value = state.company || "";
