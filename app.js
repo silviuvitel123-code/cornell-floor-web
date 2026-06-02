@@ -1075,18 +1075,7 @@ async function migrateLocalToCloudIfNeeded() {
 async function startCloudSync(user) {
   if (stateUnsubscribe) stateUnsubscribe();
   cloudReady = false;
-  setSyncStatus("Se sincronizeaza...");
-
-  // Trimite starea locala (cu toate modificarile recente) in cloud
-  // INAINTE sa subscribem — astfel datele locale nu sunt suprascrise
-  const localHasData = Boolean(localStorage.getItem(storageKey));
-  if (localHasData) {
-    try {
-      await saveStateToCloud(user.uid, state);
-    } catch (e) {
-      console.warn("Pre-save failed:", e);
-    }
-  }
+  setSyncStatus("Se incarca din cloud...");
 
   stateUnsubscribe = subscribeToState(
     user.uid,
