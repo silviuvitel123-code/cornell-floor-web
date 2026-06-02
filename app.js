@@ -144,7 +144,9 @@ function scheduleCloudSave() {
 }
 
 function saveState() {
-  state.savedAt = Date.now(); // timestamp pt conflict resolution
+  const ts = Date.now();
+  state.savedAt = ts;
+  localStorage.setItem("cf-last-edit", ts.toString()); // separat de state
   scheduleCloudSave();
 }
 
@@ -1063,19 +1065,21 @@ function setAuthGateVisible(visible) {
 }
 
 function applyRemoteState(remoteState) {
-  const localTs = state.savedAt || 0;
+  // cf-last-edit e setat DOAR cand userul face modificari explicite (saveState)
+  // Nu e niciodata setat de render() sau alte operatii automate
+  const localEditTs = Number(localStorage.getItem("cf-last-edit") || 0);
   const remoteTs = remoteState.savedAt || 0;
 
-  // Local castiga DOAR daca are timestamp real (> 0) si e mai nou decat cloud
-  // Daca ambele sunt 0 (fara timestamp), cloud castiga intotdeauna
-  if (localTs > 0 && localTs > remoteTs) {
+  if (localEditTs > 0 && localEditTs > remoteTs) {
+    // Userul a facut modificari pe acest dispozitiv mai recente decat cloud
     cloudReady = true;
+    state.savedAt = localEditTs;
     scheduleCloudSave();
     setSyncStatus("Se actualizeaza cloud-ul cu datele locale...");
     return;
   }
 
-  // Cloud castiga → aplicam datele din cloud
+  // Cloud e mai nou sau nu am modificat local → aplicam cloud
   applyingRemote = true;
   state = remoteState;
   state.lastTimesheetMonth = currentMonthKey();
