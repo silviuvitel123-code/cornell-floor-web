@@ -784,7 +784,10 @@ function closeSitesSubmenu() {
 
 function bindEvents() {
   document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => showView(button.dataset.view));
+    button.addEventListener("click", () => {
+      showView(button.dataset.view);
+      closeMobileNav(); // inchide sidebar pe mobil dupa navigare
+    });
   });
 
   // Santiere dropdown toggle
@@ -809,7 +812,8 @@ function bindEvents() {
     btn.addEventListener("click", closeSitesSubmenu);
   });
 
-  $("#menuBtn").addEventListener("click", toggleMobileNav);
+  $("#menuBtn")?.addEventListener("click", toggleMobileNav);
+  $("#mobileMenuFab")?.addEventListener("click", toggleMobileNav);
   $("#navOverlay").addEventListener("click", closeMobileNav);
   $("#alertIconBtn").addEventListener("click", () => {
     showView("home", { scrollTo: "#homeAlerts", focusTarget: "#homeAlerts" });
@@ -1166,14 +1170,16 @@ function registerServiceWorker() {
 
 function closeMobileNav() {
   document.body.classList.remove("menu-open");
-  $("#menuBtn").setAttribute("aria-expanded", "false");
+  $("#menuBtn")?.setAttribute("aria-expanded", "false");
+  $("#mobileMenuFab")?.setAttribute("aria-expanded", "false");
   $("#navOverlay").hidden = true;
 }
 
 function toggleMobileNav() {
   const open = !document.body.classList.contains("menu-open");
   document.body.classList.toggle("menu-open", open);
-  $("#menuBtn").setAttribute("aria-expanded", open ? "true" : "false");
+  $("#menuBtn")?.setAttribute("aria-expanded", open ? "true" : "false");
+  $("#mobileMenuFab")?.setAttribute("aria-expanded", open ? "true" : "false");
   $("#navOverlay").hidden = !open;
   if (open) $("#mainNav").querySelector(".nav-link.active")?.focus();
 }

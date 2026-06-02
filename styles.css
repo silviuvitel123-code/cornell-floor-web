@@ -1096,77 +1096,148 @@ body.auth-locked .workspace {
   }
 }
 
+/* ── Mobile FAB hamburger ── */
+.mobile-menu-fab {
+  display: none;
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 30;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(28, 27, 24, 0.92);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.mobile-menu-fab i {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #e8e0d0;
+  border-radius: 2px;
+  transition: 0.25s;
+}
+
+/* nav-overlay acoperă toată pagina */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
 @media (max-width: 900px) {
-  .site-header {
-    grid-template-columns: 1fr auto;
-    min-height: 96px;
-    padding: 12px 16px;
-    gap: 12px;
+  /* Ascunde hamburgherul din header (site-header) pe mobil */
+  .menu-btn { display: none; }
+
+  /* FAB vizibil */
+  .mobile-menu-fab { display: flex; }
+
+  /* Sidebar ascuns implicit pe mobil */
+  .header-left {
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+    z-index: 25;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.5);
   }
 
-  .brand {
-    justify-self: start;
-  }
-
-  .header-tools {
-    grid-column: 2;
-    gap: 12px;
-  }
-
-  .menu-btn {
-    display: grid;
-  }
-
-  .main-nav {
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 9;
-    display: grid;
-    gap: 0;
-    width: min(320px, 88vw);
-    height: 100dvh;
-    padding: 88px 22px 24px;
-    background: rgba(6, 7, 8, 0.98);
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    transform: translateX(100%);
-    transition: transform 0.24s ease;
-    overflow-y: auto;
-  }
-
-  .main-nav button {
-    width: 100%;
-    padding: 14px 0;
-    text-align: left;
-    font-size: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .main-nav button::after {
-    display: none;
-  }
-
-  body.menu-open .main-nav {
+  /* Sidebar vizibil cand meniu e deschis */
+  body.menu-open .header-left {
     transform: translateX(0);
   }
 
-  .hero-shell {
-    min-height: 58vh;
+  /* FAB animat cand e deschis */
+  body.menu-open .mobile-menu-fab i:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  body.menu-open .mobile-menu-fab i:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  body.menu-open .mobile-menu-fab i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* Workspace fara padding-left (sidebar nu mai e vizibil permanent) */
+  .workspace {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
+  /* Hero content fara offset pentru sidebar */
   .hero-content {
-    margin-top: 56px;
-    gap: 18px;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-top: 24px;
   }
 
-  .hero-copy {
-    font-size: 18px;
+  /* Site header tools in dreapta */
+  .site-header {
+    padding: 16px 70px 16px 16px;
   }
 
-  .hero-btn {
-    min-height: 62px;
-    padding: 0 28px;
-    font-size: 20px;
+  .hero-shell {
+    min-height: 200px;
+  }
+
+  .kicker {
+    font-size: clamp(18px, 5vw, 32px);
+  }
+
+  /* Grids la o coloana */
+  .home-layout,
+  .timesheet-console,
+  .cloud-layout,
+  .site-d5-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .site-chapters-nav {
+    border-right: none;
+    border-bottom: 1px solid #3d3a34;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 12px;
+  }
+
+  .chapter-item {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 12px;
+    border-radius: 8px;
+    flex: none;
+  }
+
+  .chapter-item.active {
+    border-bottom-color: var(--yellow);
+    background: rgba(247, 183, 25, 0.08);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .site-edit-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .summary-grid,
+  .generator-grid,
+  .worker-hours,
+  .cloud-form {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-text { font-size: 26px; }
+  h2 { font-size: 24px; }
+
+  .pontaj-tools {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

@@ -2,8 +2,13 @@
 <html lang="ro">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#060708" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7b719" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CF Floor" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
     <meta
       name="description"
       content="Panou inginer: santiere active, pontaje, alerte si rapoarte pentru Cornell's Floor."
@@ -14,6 +19,10 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="nav-overlay" id="navOverlay" hidden></div>
+    <button class="mobile-menu-fab" id="mobileMenuFab" aria-label="Meniu" type="button">
+      <i></i><i></i><i></i>
+    </button>
     <a class="skip-link" href="#workspace">Sari la continut</a>
 
     <div class="auth-gate" id="authGate" hidden>
@@ -57,7 +66,6 @@
         <div class="hero-slide" data-idx="3"></div>
         <div class="hero-slide" data-idx="4"></div>
       </div>
-      <div class="nav-overlay" id="navOverlay" hidden></div>
       <header class="site-header">
         <div class="header-left">
           <button class="brand" data-view="home" aria-label="Acasa">
