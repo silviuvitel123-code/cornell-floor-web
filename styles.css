@@ -122,39 +122,44 @@ body.menu-open {
   z-index: 0;
 }
 
+/* Slide 1: Buldozer aerian — wide, tot utilajul vizibil */
 .hero-slide:nth-child(1)::after {
-  background-image: url("https://images.unsplash.com/photo-1603814744174-115311ad645e?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 50%;
+  background-image: url("https://images.unsplash.com/photo-1686968719625-3faf853a543e?auto=format&fit=crop&w=2400&q=90");
+  background-position: center 60%;
 }
 
+/* Slide 2: Santier constructie buldozer wide */
 .hero-slide:nth-child(2)::after {
-  background-image: url("https://images.unsplash.com/photo-1580901369227-308f6f40bdeb?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://images.unsplash.com/photo-1691047489143-79b91c648c85?auto=format&fit=crop&w=2400&q=90");
   background-position: center 55%;
 }
 
+/* Slide 3: Santier constructie cu echipamente aerian */
 .hero-slide:nth-child(3)::after {
-  background-image: url("https://plus.unsplash.com/premium_photo-1664300339932-9d1174b23f42?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://images.unsplash.com/photo-1723367194881-fe2e53534170?auto=format&fit=crop&w=2400&q=90");
   background-position: center 50%;
 }
 
+/* Slide 4: Buldozer sapand teren wide angle */
 .hero-slide:nth-child(4)::after {
-  background-image: url("https://plus.unsplash.com/premium_photo-1682144365685-d6845d200510?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 45%;
+  background-image: url("https://images.unsplash.com/photo-1683372101272-6a144c795e2a?auto=format&fit=crop&w=2400&q=90");
+  background-position: center 50%;
 }
 
+/* Slide 5: Santier cu buldozer aerian wide */
 .hero-slide:nth-child(5)::after {
-  background-image: url("https://images.unsplash.com/photo-1565461270936-c52be606c6de?auto=format&fit=crop&w=2400&q=90");
+  background-image: url("https://images.unsplash.com/photo-1689596312049-0a21da693515?auto=format&fit=crop&w=2400&q=90");
   background-position: center 55%;
 }
 
 @keyframes kenburns-in {
-  from { transform: scale(1) translate(0, 0); }
-  to   { transform: scale(1.10) translate(-1.2%, 0.6%); }
+  from { transform: scale(1.0) translate(0, 0); }
+  to   { transform: scale(1.06) translate(-0.8%, 0.4%); }
 }
 
 @keyframes kenburns-in-r {
-  from { transform: scale(1) translate(0, 0); }
-  to   { transform: scale(1.09) translate(1%, -0.4%); }
+  from { transform: scale(1.0) translate(0, 0); }
+  to   { transform: scale(1.06) translate(0.8%, -0.3%); }
 }
 
 .hero-slide.active::after {
