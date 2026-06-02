@@ -769,29 +769,73 @@ function renderSiteDetailContent() {
           </button>
         `).join("")}
       </nav>
-      <div class="site-chapter-preview">
-        <div class="ch-preview-icon">${ch.icon}</div>
-        <div class="ch-preview-title">${escapeHtml(ch.title)}</div>
-        <div class="ch-preview-desc">${escapeHtml(ch.desc)}</div>
-        <button class="yellow-btn ch-open-btn" data-ch="${currentChapterIdx}">Deschide &rarr;</button>
+      <div class="site-chapter-preview" id="chapterContent">
+        <!-- file manager se incarca aici -->
       </div>
     </div>
   `;
+
+  // Click pe capitol → incarca file manager in panoul drept
   el.querySelectorAll("[data-ch]").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentChapterIdx = Number(btn.dataset.ch);
-      renderSiteDetailContent();
+      // Actualizeaza selectia vizuala
+      el.querySelectorAll(".chapter-item").forEach((b, i) =>
+        b.classList.toggle("active", i === currentChapterIdx)
+      );
+      loadChapterFiles(currentSiteId, SITE_CHAPTERS[currentChapterIdx]);
     });
   });
 
-  // Butonul Deschide → deschide file manager-ul
-  el.querySelectorAll(".ch-open-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const idx = Number(btn.dataset.ch);
-      const ch = SITE_CHAPTERS[idx];
-      showChapter(currentSiteId, ch.key, ch.title);
-    });
+  // Incarca primul capitol implicit
+  loadChapterFiles(currentSiteId, ch);
+}
+
+function loadChapterFiles(siteId, chapter) {
+  const panel = $("#chapterContent");
+  if (!panel) return;
+  currentChapterKey = chapter.key;
+
+  panel.innerHTML = `
+    <div class="ch-panel-header">
+      <span class="ch-panel-icon">${chapter.icon}</span>
+      <span class="ch-panel-title">${escapeHtml(chapter.title)}</span>
+    </div>
+    <div class="file-upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" multiple hidden />
+      <div class="upload-prompt" id="uploadPrompt">
+        <p>Trage fișierele aici sau <button class="upload-pick-btn" id="pickFiles">alege</button></p>
+        <p class="muted" style="font-size:11px;margin-top:4px">PDF, DWG, DOCX, XLSX, JPG și orice format</p>
+      </div>
+      <div class="upload-progress" id="uploadProgress" hidden>
+        <div class="upload-progress-bar"><div class="upload-progress-fill" id="progressFill"></div></div>
+        <p id="progressText" class="muted" style="font-size:12px;text-align:center;margin-top:6px">Se încarcă...</p>
+      </div>
+    </div>
+    <div class="file-list" id="fileList">
+      <p class="muted" style="padding:16px;text-align:center;font-size:13px">Se încarcă...</p>
+    </div>
+  `;
+
+  const input = $("#fileInput");
+  const zone = $("#uploadZone");
+  $("#pickFiles").addEventListener("click", () => input.click());
+  input.addEventListener("change", () => handleUpload(Array.from(input.files), siteId, chapter.key));
+  zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("drag-over"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+  zone.addEventListener("drop", (e) => {
+    e.preventDefault(); zone.classList.remove("drag-over");
+    handleUpload(Array.from(e.dataTransfer.files), siteId, chapter.key);
   });
+
+  if (filesUnsubscribe) filesUnsubscribe();
+  if (currentUser && isFirebaseConfigured()) {
+    filesUnsubscribe = subscribeToFiles(currentUser.uid, siteId, chapter.key, (files) => {
+      renderFileList(files, siteId, chapter.key);
+    });
+  } else {
+    $("#fileList").innerHTML = `<p class="muted" style="padding:16px;text-align:center">Conectează-te pentru fișiere.</p>`;
+  }
 }
 
 function showChapter(siteId, chapterKey, chapterTitle) {
