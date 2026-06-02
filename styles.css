@@ -174,9 +174,8 @@ body.menu-open {
   flex-direction: column;
   gap: 36px;
   padding: 36px 22px 24px;
-  background: rgba(4, 5, 6, 0.72);
-  backdrop-filter: blur(14px);
-  border-right: 1px solid rgba(247, 183, 25, 0.12);
+  background: #0d0c0a;
+  border-right: 1px solid rgba(247, 183, 25, 0.15);
 }
 
 .sidebar-footer {
