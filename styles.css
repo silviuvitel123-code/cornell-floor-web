@@ -122,34 +122,14 @@ body.menu-open {
   z-index: 0;
 }
 
-/* Slide 1: Excavator galben pe deal, cer albastru — tot utilajul vizibil */
-.hero-slide:nth-child(1)::after {
-  background-image: url("https://images.unsplash.com/photo-1649807479468-40011b31ee09?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 55%;
-}
-
-/* Slide 2: Excavator galben pe sol, nori albi */
-.hero-slide:nth-child(2)::after {
-  background-image: url("https://images.unsplash.com/photo-1613928270169-4e4462c75a79?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 50%;
-}
-
-/* Slide 3: Excavator langa deal / cariera, dramatic */
-.hero-slide:nth-child(3)::after {
-  background-image: url("https://images.unsplash.com/photo-1505833464198-4993b36cdfab?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 55%;
-}
-
-/* Slide 4: Silhouette excavator la apus de soare */
-.hero-slide:nth-child(4)::after {
-  background-image: url("https://images.unsplash.com/photo-1653315919118-9122a6896706?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 50%;
-}
-
-/* Slide 5: CAT excavator galben, nori si copaci */
+/* Toate slide-urile: loading vehicle / borrow pit */
+.hero-slide:nth-child(1)::after,
+.hero-slide:nth-child(2)::after,
+.hero-slide:nth-child(3)::after,
+.hero-slide:nth-child(4)::after,
 .hero-slide:nth-child(5)::after {
-  background-image: url("https://images.unsplash.com/photo-1503708928676-1cb796a0891e?auto=format&fit=crop&w=2400&q=90");
-  background-position: center 55%;
+  background-image: url("https://plus.unsplash.com/premium_photo-1682142169420-d0ef7507ef01?auto=format&fit=crop&w=2400&q=90");
+  background-position: center 50%;
 }
 
 @keyframes kenburns-in {
