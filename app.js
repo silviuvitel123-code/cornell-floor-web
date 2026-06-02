@@ -276,8 +276,7 @@ function renderSummary() {
   const avgProgress = Math.round(state.sites.reduce((sum, site) => sum + Number(site.progress), 0) / Math.max(activeSites, 1));
   const activeWorkers = state.workers.filter((worker) => worker.active).length;
   const alerts = state.alerts.length;
-  $("#alertBadge").textContent = alerts;
-  $("#alertIconBtn").setAttribute("aria-label", `${alerts} notificari si alerte`);
+  $("#alertBadge")?.textContent && ($("#alertBadge").textContent = alerts);
   $("#summaryGrid").innerHTML = [
     ["Santiere active", activeSites, `${avgProgress}% progres mediu`, avgProgress],
     ["Oameni in pontaj", activeWorkers, "inclusiv inginerul", Math.min(activeWorkers * 18, 100)],
@@ -815,9 +814,7 @@ function bindEvents() {
   $("#menuBtn")?.addEventListener("click", toggleMobileNav);
   $("#mobileMenuFab")?.addEventListener("click", toggleMobileNav);
   $("#navOverlay").addEventListener("click", closeMobileNav);
-  $("#alertIconBtn").addEventListener("click", () => {
-    showView("home", { scrollTo: "#homeAlerts", focusTarget: "#homeAlerts" });
-  });
+
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeMobileNav();
@@ -953,6 +950,21 @@ function bindEvents() {
 
   $("#generatePdfBtn").addEventListener("click", generatePdf);
   $("#logoutBtn")?.addEventListener("click", handleLogout);
+
+  $("#forceSyncBtn")?.addEventListener("click", async () => {
+    if (!cloudReady || !currentUser) {
+      notify("Nu esti conectat la cloud. Verifica autentificarea.");
+      return;
+    }
+    try {
+      setSyncStatus("Se salveaza in cloud...");
+      await saveStateToCloud(currentUser.uid, state);
+      setSyncStatus(`Sincronizat: ${new Date().toLocaleString("ro-RO")}`);
+      notify("Datele au fost salvate in cloud. Deschide aplicatia pe alt dispozitiv.");
+    } catch (e) {
+      notify("Eroare la salvare: " + e.message);
+    }
+  });
   $("#loginForm")?.addEventListener("submit", handleLogin);
   $("#registerForm")?.addEventListener("submit", handleRegister);
   $("#showRegisterBtn")?.addEventListener("click", () => toggleAuthMode("register"));
