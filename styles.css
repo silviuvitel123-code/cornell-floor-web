@@ -391,6 +391,35 @@ body.menu-open {
   color: var(--yellow);
 }
 
+/* ── File Manager ── */
+.file-upload-zone {
+  border: 2px dashed #3d3a34;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 20px;
+  background: #1c1b18;
+}
+.file-upload-zone.drag-over { border-color: var(--yellow); background: rgba(247,183,25,.05); }
+.upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.upload-pick-btn { border: none; background: transparent; color: var(--yellow); font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: underline; padding: 0; }
+.upload-progress-bar { height: 8px; background: #3d3a34; border-radius: 999px; overflow: hidden; margin: 8px 0; }
+.upload-progress-fill { height: 100%; background: var(--yellow); border-radius: 999px; width: 0%; transition: width 0.2s; }
+.file-list { display: flex; flex-direction: column; gap: 8px; }
+.file-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; background: #272520; border: 1px solid #3d3a34; transition: border-color 0.15s; }
+.file-item:hover { border-color: #5a5248; }
+.file-icon { font-size: 28px; flex-shrink: 0; }
+.file-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.file-name { font-weight: 700; color: #e8e0d0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-size: 12px; color: #9a9080; }
+.file-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.file-btn { padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 700; border: 1px solid #3d3a34; background: #1c1b18; color: #e8e0d0; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.15s, color 0.15s; }
+.file-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+.file-btn-del { color: #9a9080; }
+.file-btn-del:hover { border-color: #f87171; color: #f87171; }
+
 /* ── Design 5: Pagina santier ── */
 .site-d5-layout {
   display: grid;

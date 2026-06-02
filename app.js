@@ -7,6 +7,9 @@ import {
   logout,
   subscribeToState,
   saveStateToCloud,
+  subscribeToFiles,
+  uploadFile,
+  deleteFile,
 } from "./js/db.js";
 
 const storageKey = "cf-cornells-floor-v1";
@@ -23,6 +26,8 @@ let cloudReady = false;
 let applyingRemote = false;
 let selectedDate = "";
 let currentSiteId = null;
+let currentChapterKey = null;
+let filesUnsubscribe = null;
 let state = createDefaultState();
 
 function todayIso() {
@@ -778,6 +783,169 @@ function renderSiteDetailContent() {
       renderSiteDetailContent();
     });
   });
+
+  // Butonul Deschide → deschide file manager-ul
+  el.querySelectorAll(".ch-open-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.ch);
+      const ch = SITE_CHAPTERS[idx];
+      showChapter(currentSiteId, ch.key, ch.title);
+    });
+  });
+}
+
+function showChapter(siteId, chapterKey, chapterTitle) {
+  currentChapterKey = chapterKey;
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  document.querySelectorAll(".nav-link").forEach((l) => { l.classList.remove("active"); l.removeAttribute("aria-current"); });
+  const el = $("#chapter-files");
+  el.classList.add("active");
+  const sitesBtn = $("#sitesNavBtn");
+  if (sitesBtn) sitesBtn.classList.add("active", "sub-open");
+  renderFileManager(siteId, chapterKey, chapterTitle);
+  $(".workspace").scrollIntoView({ behavior: "smooth" });
+}
+
+function fileIcon(type) {
+  if (type.includes("pdf")) return "📄";
+  if (type.includes("word") || type.includes("docx") || type.includes("doc")) return "📝";
+  if (type.includes("excel") || type.includes("sheet") || type.includes("xlsx")) return "📊";
+  if (type.includes("image") || type.includes("jpg") || type.includes("png")) return "🖼️";
+  if (type.includes("zip") || type.includes("rar")) return "🗜️";
+  if (type.includes("dwg") || type.includes("dxf") || type.includes("cad")) return "📐";
+  return "📁";
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function renderFileManager(siteId, chapterKey, chapterTitle) {
+  const el = $("#chapter-files");
+  const site = state.sites.find((s) => s.id === siteId);
+  el.innerHTML = `
+    <div class="section-title row">
+      <div>
+        <p class="eyebrow" style="cursor:pointer" id="backToSite">← ${escapeHtml(site?.name || "Santier")}</p>
+        <h2>${escapeHtml(chapterTitle)}</h2>
+      </div>
+    </div>
+
+    <div class="file-upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" multiple hidden />
+      <div class="upload-prompt" id="uploadPrompt">
+        <span style="font-size:40px">📁</span>
+        <p>Trage fișierele aici sau <button class="upload-pick-btn" id="pickFiles">alege fișiere</button></p>
+        <p class="muted" style="font-size:12px;margin-top:6px">PDF, DWG, DOCX, XLSX, JPG și orice alt format</p>
+      </div>
+      <div class="upload-progress" id="uploadProgress" hidden>
+        <div class="upload-progress-bar"><div class="upload-progress-fill" id="progressFill"></div></div>
+        <p id="progressText" class="muted" style="font-size:13px;text-align:center;margin-top:8px">Se încarcă...</p>
+      </div>
+    </div>
+
+    <div class="file-list" id="fileList">
+      <p class="muted" style="padding:20px;text-align:center">Se încarcă fișierele...</p>
+    </div>
+  `;
+
+  // Back button
+  $("#backToSite").addEventListener("click", () => showSiteDetail(siteId));
+
+  // Upload zone events
+  const zone = $("#uploadZone");
+  const input = $("#fileInput");
+  const pickBtn = $("#pickFiles");
+
+  pickBtn.addEventListener("click", () => input.click());
+  input.addEventListener("change", () => handleUpload(Array.from(input.files), siteId, chapterKey));
+
+  zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("drag-over"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+  zone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    zone.classList.remove("drag-over");
+    handleUpload(Array.from(e.dataTransfer.files), siteId, chapterKey);
+  });
+
+  // Ascultam fisierele real-time
+  if (filesUnsubscribe) filesUnsubscribe();
+  if (currentUser && isFirebaseConfigured()) {
+    filesUnsubscribe = subscribeToFiles(currentUser.uid, siteId, chapterKey, (files) => {
+      renderFileList(files, siteId, chapterKey);
+    });
+  } else {
+    $("#fileList").innerHTML = `<p class="muted" style="padding:20px;text-align:center">Conectează-te pentru a accesa fișierele.</p>`;
+  }
+}
+
+function renderFileList(files, siteId, chapterKey) {
+  const el = $("#fileList");
+  if (!el) return;
+  if (!files.length) {
+    el.innerHTML = `<p class="muted" style="padding:24px;text-align:center">Niciun fișier încărcat încă.</p>`;
+    return;
+  }
+  el.innerHTML = files.map((f) => `
+    <div class="file-item">
+      <span class="file-icon">${fileIcon(f.type)}</span>
+      <div class="file-info">
+        <span class="file-name">${escapeHtml(f.name)}</span>
+        <span class="file-meta">${formatSize(f.size)} · ${new Date(f.uploadedAt).toLocaleDateString("ro-RO")}</span>
+      </div>
+      <div class="file-actions">
+        <a class="file-btn" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">
+          ${f.type.includes("pdf") ? "Vizualizare" : "Descarcă"}
+        </a>
+        <button class="file-btn file-btn-del" data-fid="${escapeAttr(f.fileId)}" data-path="${escapeAttr(f.storagePath)}">Șterge</button>
+      </div>
+    </div>
+  `).join("");
+
+  el.querySelectorAll(".file-btn-del").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Ștergi fișierul definitiv?")) return;
+      btn.disabled = true;
+      btn.textContent = "Se șterge...";
+      try {
+        await deleteFile(currentUser.uid, siteId, chapterKey, btn.dataset.fid, btn.dataset.path);
+      } catch (e) {
+        notify("Eroare la ștergere: " + e.message);
+        btn.disabled = false;
+        btn.textContent = "Șterge";
+      }
+    });
+  });
+}
+
+async function handleUpload(files, siteId, chapterKey) {
+  if (!files.length || !currentUser) return;
+  const zone = $("#uploadZone");
+  const prompt = $("#uploadPrompt");
+  const progress = $("#uploadProgress");
+  const fill = $("#progressFill");
+  const text = $("#progressText");
+
+  if (prompt) prompt.hidden = true;
+  if (progress) progress.hidden = false;
+
+  for (const file of files) {
+    if (text) text.textContent = `Se încarcă: ${file.name}`;
+    try {
+      await uploadFile(currentUser.uid, siteId, chapterKey, file, (pct) => {
+        if (fill) fill.style.width = pct + "%";
+      });
+    } catch (e) {
+      notify("Eroare upload " + file.name + ": " + e.message);
+    }
+  }
+
+  if (prompt) prompt.hidden = false;
+  if (progress) progress.hidden = true;
+  if (fill) fill.style.width = "0%";
+  notify("Fișier(e) încărcate cu succes.");
 }
 
 function closeSitesSubmenu() {
