@@ -507,7 +507,6 @@ body.menu-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: var(--sidebar-w);
 }
 
 .eyebrow {
