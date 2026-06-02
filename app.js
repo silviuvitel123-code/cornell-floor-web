@@ -1166,6 +1166,20 @@ async function bootstrap() {
   // Render imediat din localStorage — nu asteapta Firebase
   state = loadLocalState();
   if (!state.lastTimesheetMonth) state.lastTimesheetMonth = currentMonthKey();
+
+  // Detecteaza automat daca avem date reale (nu datele demo default)
+  // Daca da, marcam ca "date locale mai recente" → castiga la sync vs cloud cu demo
+  const DEMO_SITES = new Set(["Complex rezidential Nord", "Hala productie Otopeni", "Amenajare birouri Cornell"]);
+  const DEMO_WORKERS = new Set(["Ing. Vitel Silviu", "Simonescu Gabriel"]);
+  const hasRealSites = state.sites && state.sites.some(s => !DEMO_SITES.has(s.name));
+  const hasRealWorkers = state.workers && state.workers.some(w => !DEMO_WORKERS.has(w.name));
+  const hasRealData = hasRealSites || hasRealWorkers;
+  if (hasRealData && !localStorage.getItem("cf-last-edit")) {
+    const ts = Date.now();
+    state.savedAt = ts;
+    localStorage.setItem("cf-last-edit", ts.toString());
+    saveStateLocal();
+  }
   $("#fromDate").value = monthStartIso();
   $("#toDate").value = monthEndIso();
   $("#companyName").value = state.company || "";
