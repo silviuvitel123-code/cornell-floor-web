@@ -144,6 +144,7 @@ function scheduleCloudSave() {
 }
 
 function saveState() {
+  state.savedAt = Date.now(); // timestamp pt conflict resolution
   scheduleCloudSave();
 }
 
@@ -1062,15 +1063,25 @@ function setAuthGateVisible(visible) {
 }
 
 function applyRemoteState(remoteState) {
+  const localTs = state.savedAt || 0;
+  const remoteTs = remoteState.savedAt || 0;
+
+  // Daca datele locale sunt mai noi decat cloud → le incarcam in cloud
+  if (localTs > remoteTs) {
+    cloudReady = true;
+    scheduleCloudSave();
+    setSyncStatus("Se actualizeaza cloud-ul cu datele locale...");
+    return;
+  }
+
+  // Cloud e mai nou sau la egalitate → aplicam datele din cloud
   applyingRemote = true;
   state = remoteState;
-  // Marcheaza luna ca fiind luna curenta ca sa evitam fillMonth la urmatorul sync
   state.lastTimesheetMonth = currentMonthKey();
   $("#companyName").value = state.company || "";
   $("#fiscalCode").value = state.fiscalCode || "";
   applyingRemote = false;
   render();
-  // NU apelam syncTimesheetToCurrentMonth — ar putea reseta zilele cu fillMonth
 }
 
 async function migrateLocalToCloudIfNeeded() {
@@ -1148,8 +1159,15 @@ async function bootstrap() {
   registerServiceWorker();
 
   // Render imediat din localStorage — nu asteapta Firebase
+  const hadLocalStorage = Boolean(localStorage.getItem(storageKey));
   state = loadLocalState();
   if (!state.lastTimesheetMonth) state.lastTimesheetMonth = currentMonthKey();
+  // Daca avem date locale salvate anterior fara timestamp, le marcam ca valide
+  // (valoare 1 = "existent inainte", orice save real va fi mult mai mare)
+  if (hadLocalStorage && !state.savedAt) {
+    state.savedAt = 1;
+    saveStateLocal();
+  }
   $("#fromDate").value = monthStartIso();
   $("#toDate").value = monthEndIso();
   $("#companyName").value = state.company || "";
