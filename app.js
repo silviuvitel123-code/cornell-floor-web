@@ -959,17 +959,20 @@ function bindEvents() {
   $("#sidebarLogout")?.addEventListener("click", handleLogout);
 
   $("#forceSyncBtn")?.addEventListener("click", async () => {
-    if (!cloudReady || !currentUser) {
-      notify("Nu esti conectat la cloud. Verifica autentificarea.");
+    if (!currentUser) {
+      notify("Nu esti logat. Autentifica-te mai intai.");
       return;
     }
     try {
       setSyncStatus("Se salveaza in cloud...");
       await saveStateToCloud(currentUser.uid, state);
+      cloudReady = true;
       setSyncStatus(`Sincronizat: ${new Date().toLocaleString("ro-RO")}`);
-      notify("Datele au fost salvate in cloud. Deschide aplicatia pe alt dispozitiv.");
+      notify("Salvat in cloud. Reincarca pe mobil.");
+      renderAccountPanel();
     } catch (e) {
-      notify("Eroare la salvare: " + e.message);
+      notify("Eroare: " + e.message);
+      console.error(e);
     }
   });
   $("#loginForm")?.addEventListener("submit", handleLogin);
@@ -1095,13 +1098,15 @@ async function startCloudSync(user) {
   if (stateUnsubscribe) stateUnsubscribe();
   cloudReady = false;
   setSyncStatus("Se incarca din cloud...");
+  console.log("[sync] startCloudSync uid:", user.uid);
 
   stateUnsubscribe = subscribeToState(
     user.uid,
     async (remoteState) => {
+      console.log("[sync] onSnapshot fired, hasData:", !!remoteState);
       if (remoteState) {
-        try { applyRemoteState(remoteState); } catch (e) { console.error("sync error:", e); }
-        cloudReady = true; // intotdeauna setat, indiferent de erori
+        try { applyRemoteState(remoteState); } catch (e) { console.error("[sync] applyRemoteState error:", e); }
+        cloudReady = true;
         setSyncStatus(`Sincronizat: ${new Date().toLocaleString("ro-RO")}`);
         return;
       }
@@ -1116,8 +1121,9 @@ async function startCloudSync(user) {
       applyRemoteState(state);
     },
     (error) => {
+      console.error("[sync] Firestore error:", error);
       setSyncStatus(`Eroare sync: ${error.message}`);
-      notify("Nu pot citi datele din cloud.");
+      notify("Eroare Firestore: " + error.message);
     }
   );
 }

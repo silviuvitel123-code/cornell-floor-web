@@ -7,12 +7,12 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import {
-  getFirestore,
-  doc,
-  onSnapshot,
-  setDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  getDatabase,
+  ref,
+  set,
+  onValue,
+  off,
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const PLACEHOLDER = "YOUR_";
@@ -20,8 +20,8 @@ const PLACEHOLDER = "YOUR_";
 export function isFirebaseConfigured() {
   return Boolean(
     firebaseConfig.apiKey &&
-      firebaseConfig.projectId &&
-      !firebaseConfig.apiKey.startsWith(PLACEHOLDER)
+    firebaseConfig.databaseURL &&
+    !firebaseConfig.apiKey.startsWith(PLACEHOLDER)
   );
 }
 
@@ -33,7 +33,7 @@ export function initFirebase() {
   if (!isFirebaseConfigured()) return false;
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
+  db = getDatabase(app);
   return true;
 }
 
@@ -55,28 +55,15 @@ export function logout() {
 }
 
 export function subscribeToState(uid, onData, onError) {
-  const ref = doc(db, "users", uid, "workspace", "main");
-  return onSnapshot(
-    ref,
-    (snapshot) => {
-      onData(snapshot.exists() ? snapshot.data().payload : null);
-    },
-    onError
-  );
+  const dbRef = ref(db, `users/${uid}/workspace`);
+  onValue(dbRef, (snapshot) => {
+    onData(snapshot.val());
+  }, onError);
+  // Returneaza functia de cleanup
+  return () => off(dbRef, "value");
 }
 
 export async function saveStateToCloud(uid, payload) {
-  const ref = doc(db, "users", uid, "workspace", "main");
-  await setDoc(
-    ref,
-    {
-      payload,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
-}
-
-export function getProjectId() {
-  return firebaseConfig.projectId || "";
+  const dbRef = ref(db, `users/${uid}/workspace`);
+  await set(dbRef, payload);
 }
