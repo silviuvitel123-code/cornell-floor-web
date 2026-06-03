@@ -966,7 +966,6 @@ function renderFileList(files, siteId, chapterKey) {
 
 async function handleUpload(files, siteId, chapterKey) {
   if (!files.length || !currentUser) return;
-  const zone = $("#uploadZone");
   const prompt = $("#uploadPrompt");
   const progress = $("#uploadProgress");
   const fill = $("#progressFill");
@@ -975,12 +974,14 @@ async function handleUpload(files, siteId, chapterKey) {
   if (prompt) prompt.hidden = true;
   if (progress) progress.hidden = false;
 
+  const uploaded = [];
   for (const file of files) {
     if (text) text.textContent = `Se încarcă: ${file.name}`;
     try {
-      await uploadFile(currentUser.uid, siteId, chapterKey, file, (pct) => {
+      const meta = await uploadFile(currentUser.uid, siteId, chapterKey, file, (pct) => {
         if (fill) fill.style.width = pct + "%";
       });
+      uploaded.push(meta);
     } catch (e) {
       notify("Eroare upload " + file.name + ": " + e.message);
     }
@@ -989,7 +990,15 @@ async function handleUpload(files, siteId, chapterKey) {
   if (prompt) prompt.hidden = false;
   if (progress) progress.hidden = true;
   if (fill) fill.style.width = "0%";
-  notify("Fișier(e) încărcate cu succes.");
+
+  if (uploaded.length) {
+    notify(`${uploaded.length} fișier(e) încărcate cu succes.`);
+    // Forteaza re-subscribe ca sa apara fisierele imediat
+    if (filesUnsubscribe) filesUnsubscribe();
+    filesUnsubscribe = subscribeToFiles(currentUser.uid, siteId, chapterKey, (files) => {
+      renderFileList(files, siteId, chapterKey);
+    });
+  }
 }
 
 function closeSitesSubmenu() {
