@@ -93,13 +93,13 @@ function cloudinaryResourceType(file) {
   return "raw"; // PDF, DOCX, DWG, XLSX etc
 }
 
-export function uploadFile(uid, siteId, chapterKey, file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const resourceType = cloudinaryResourceType(file);
-    // public_id scurt si sigur
-    const publicId = `cf_${fileId}`;
+export async function uploadFile(uid, siteId, chapterKey, file, onProgress) {
+  const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const resourceType = cloudinaryResourceType(file);
+  const publicId = `cf_${fileId}`;
 
+  // Folosim XHR pentru progress real, cu fallback la fetch
+  const uploadResult = await new Promise((resolve, reject) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_PRESET);
@@ -109,36 +109,59 @@ export function uploadFile(uid, siteId, chapterKey, file, onProgress) {
     xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${resourceType}/upload`);
 
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        onProgress && onProgress(Math.round((e.loaded / e.total) * 100));
-      }
+      if (e.lengthComputable) onProgress && onProgress(Math.round(e.loaded / e.total * 100));
     };
 
-    xhr.onload = async () => {
+    xhr.onload = () => {
       if (xhr.status === 200) {
-        const result = JSON.parse(xhr.responseText);
-        const meta = {
-          fileId,
-          name: file.name,
-          size: file.size,
-          type: file.type || result.resource_type,
-          uploadedAt: new Date().toISOString(),
-          publicId: result.public_id,
-          downloadURL: result.secure_url,
-          resourceType: result.resource_type,
-        };
-        await set(ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}/${fileId}`), meta);
-        resolve(meta);
+        resolve(JSON.parse(xhr.responseText));
       } else {
-        reject(new Error("Upload Cloudinary eșuat: " + xhr.responseText));
+        // Incearca cu /auto daca /raw a esuat
+        const fallback = new XMLHttpRequest();
+        fallback.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+        const fd2 = new FormData();
+        fd2.append("file", file);
+        fd2.append("upload_preset", CLOUDINARY_PRESET);
+        fd2.append("public_id", publicId + "_a");
+        fallback.onload = () => {
+          if (fallback.status === 200) resolve(JSON.parse(fallback.responseText));
+          else reject(new Error("Upload eșuat: " + fallback.responseText));
+        };
+        fallback.onerror = () => reject(new Error("Eroare rețea. Verifică conexiunea și încearcă din nou."));
+        fallback.send(fd2);
       }
     };
 
-    xhr.onerror = () => reject(new Error(`Eroare rețea (${resourceType}). Verifică conexiunea.`));
-    xhr.ontimeout = () => reject(new Error("Timeout - fișierul e prea mare sau conexiunea e slabă."));
-    xhr.timeout = 120000; // 2 minute timeout
+    xhr.onerror = () => {
+      // Fallback la fetch
+      const fd2 = new FormData();
+      fd2.append("file", file);
+      fd2.append("upload_preset", CLOUDINARY_PRESET);
+      fd2.append("public_id", publicId + "_b");
+      fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, { method: "POST", body: fd2 })
+        .then(r => r.json())
+        .then(result => {
+          if (result.secure_url) resolve(result);
+          else reject(new Error(result.error?.message || "Upload eșuat"));
+        })
+        .catch(e => reject(new Error("Eroare rețea: " + e.message)));
+    };
+
     xhr.send(formData);
   });
+
+  const meta = {
+    fileId,
+    name: file.name,
+    size: file.size,
+    type: file.type || uploadResult.resource_type,
+    uploadedAt: new Date().toISOString(),
+    publicId: uploadResult.public_id,
+    downloadURL: uploadResult.secure_url,
+    resourceType: uploadResult.resource_type,
+  };
+  await set(ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}/${fileId}`), meta);
+  return meta;
 }
 
 export async function deleteFile(uid, siteId, chapterKey, fileId) {
