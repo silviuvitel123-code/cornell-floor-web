@@ -933,7 +933,6 @@ function renderPtContent(siteId, panel, data) {
   const canal = data.canal || {};
   const ref_ = data.refulare || {};
   const apa = data.apa || {};
-  const brans = data.bransamente || {};
 
   // Merge template cu data salvata
   const canalRows = STRAJA_CANAL.map(t => ({
@@ -957,8 +956,6 @@ function renderPtContent(siteId, panel, data) {
     brans: Number(apa[t.id]?.brans ?? t.brans),
     per:   apa[t.id]?.per ?? t.per,
   }));
-  const bransExec = Number(brans.exec ?? 0);
-
   const totalProjCanal = canalRows.reduce((s,r) => s+r.proj, 0);
   const totalExecCanal = canalRows.reduce((s,r) => s+r.exec, 0);
   const totalProjRef   = refRows.reduce((s,r) => s+r.proj, 0);
@@ -1121,31 +1118,7 @@ function renderPtContent(siteId, panel, data) {
       </div>
     </div>
 
-    <!-- BRANȘAMENTE -->
-    <div class="pt-section">
-      <div class="pt-section-head">
-        <span class="pt-section-icon">🔗</span>
-        <span class="pt-section-title">Branșamente Apă Dn32 + Racorduri Canal</span>
-        <span class="pt-section-stat">${bransExec} / ${STRAJA_BRANSAMENTE.total} buc &nbsp;•&nbsp; ${pct(bransExec,STRAJA_BRANSAMENTE.total)}%</span>
-      </div>
-      ${progressBar(pct(bransExec,STRAJA_BRANSAMENTE.total))}
-      <div class="pt-table-wrap">
-        <table class="pt-table">
-          <thead><tr><th>Tip</th><th>Total Proiectat</th><th>Executat ✏️</th><th>%</th><th>Rest</th></tr></thead>
-          <tbody>
-            <tr>
-              <td class="pt-id">Branșamente</td>
-              <td class="pt-num">${STRAJA_BRANSAMENTE.total} buc</td>
-              <td class="pt-edit" data-cat="bransamente" data-id="total" data-field="exec">${bransExec||''}</td>
-              <td><span style="color:${pctColor(pct(bransExec,STRAJA_BRANSAMENTE.total))};font-weight:700">${pct(bransExec,STRAJA_BRANSAMENTE.total)}%</span></td>
-              <td class="pt-num pt-rest">${STRAJA_BRANSAMENTE.total-bransExec} buc</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <p class="muted pt-hint">✏️ = celuleste editabilă — click pentru a modifica valorile</p>
+    <p class="muted pt-hint">✏️ = celulă editabilă — click pentru a modifica valorile. Salvare automată.</p>
   `;
 
   // Atașează editare inline
