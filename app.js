@@ -840,14 +840,52 @@ const STRAJA_CANAL = [
   { id:'Cm41', proj:67,   exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
 ];
 const STRAJA_REFULARE = [
-  { id:'CR1', proj:284 }, { id:'CR2', proj:340 }, { id:'CR3', proj:534 },
-  { id:'CR4', proj:206 }, { id:'CR5', proj:348 }, { id:'CR6', proj:197 },
-  { id:'CR7', proj:202 }, { id:'CR8', proj:298 }, { id:'CR9', proj:795 },
+  { id:'CR1', proj:284,  dn:'Dn90',  exec:0,   cv:0, per:'' },
+  { id:'CR2', proj:340,  dn:'Dn90',  exec:0,   cv:0, per:'' },
+  { id:'CR3', proj:534,  dn:'Dn90',  exec:534, cv:0, per:'' },
+  { id:'CR4', proj:206,  dn:'Dn90',  exec:0,   cv:0, per:'' },
+  { id:'CR5', proj:348,  dn:'Dn90',  exec:0,   cv:0, per:'' },
+  { id:'CR6', proj:197,  dn:'Dn90',  exec:0,   cv:0, per:'' },
+  { id:'CR7', proj:202,  dn:'Dn90',  exec:202, cv:0, per:'' },
+  { id:'CR8', proj:298,  dn:'Dn90',  exec:0,   cv:0, per:'' },
+  { id:'CR9', proj:795,  dn:'Dn110', exec:0,   cv:0, per:'' },
 ];
 const STRAJA_APA = [
-  { id:'CD28', proj:710 }, { id:'CD29', proj:242 },
+  { id:'CD1',  proj:491,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD2',  proj:295,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD3',  proj:397,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD4',  proj:495,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD5',  proj:820,  exec:820, cv:3, brans:28, per:'02.10-27.11.2025' },
+  { id:'CD6',  proj:695,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD7',  proj:114,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD8',  proj:282,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD9',  proj:285,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD10', proj:806,  exec:806, cv:0, brans:0,  per:'' },
+  { id:'CD11', proj:1222, exec:552, cv:0, brans:0,  per:'' },
+  { id:'CD12', proj:397,  exec:397, cv:0, brans:0,  per:'' },
+  { id:'CD13', proj:1265, exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD14', proj:857,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD15', proj:413,  exec:413, cv:0, brans:0,  per:'' },
+  { id:'CD16', proj:150,  exec:150, cv:0, brans:0,  per:'' },
+  { id:'CD17', proj:851,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD18', proj:163,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD19', proj:527,  exec:527, cv:0, brans:0,  per:'' },
+  { id:'CD20', proj:107,  exec:107, cv:0, brans:0,  per:'' },
+  { id:'CD22', proj:1556, exec:400, cv:0, brans:0,  per:'' },
+  { id:'CD23', proj:600,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD24', proj:64,   exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD25', proj:681,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD26', proj:293,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD27', proj:584,  exec:384, cv:0, brans:0,  per:'' },
+  { id:'CD28', proj:710,  exec:710, cv:0, brans:0,  per:'' },
+  { id:'CD29', proj:242,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD30', proj:411,  exec:411, cv:0, brans:0,  per:'' },
+  { id:'CD31', proj:193,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD32', proj:64,   exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD33', proj:76,   exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD34', proj:157,  exec:0,   cv:0, brans:0,  per:'' },
+  { id:'CD35', proj:66,   exec:0,   cv:0, brans:0,  per:'' },
 ];
-const STRAJA_BRANSAMENTE = { total: 50 }; // Dn32 apa
 
 let progressUnsubscribe = null;
 let progressData = {};
@@ -907,10 +945,17 @@ function renderPtContent(siteId, panel, data) {
     per:  canal[t.id]?.per ?? t.per,
   }));
   const refRows = STRAJA_REFULARE.map(t => ({
-    ...t, exec: Number(ref_[t.id]?.exec ?? 0),
+    ...t,
+    exec: Number(ref_[t.id]?.exec ?? t.exec),
+    cv:   Number(ref_[t.id]?.cv   ?? t.cv),
+    per:  ref_[t.id]?.per ?? t.per,
   }));
   const apaRows = STRAJA_APA.map(t => ({
-    ...t, exec: Number(apa[t.id]?.exec ?? 0),
+    ...t,
+    exec:  Number(apa[t.id]?.exec  ?? t.exec),
+    cv:    Number(apa[t.id]?.cv    ?? t.cv),
+    brans: Number(apa[t.id]?.brans ?? t.brans),
+    per:   apa[t.id]?.per ?? t.per,
   }));
   const bransExec = Number(brans.exec ?? 0);
 
@@ -1004,13 +1049,13 @@ function renderPtContent(siteId, panel, data) {
     <div class="pt-section">
       <div class="pt-section-head">
         <span class="pt-section-icon">🟡</span>
-        <span class="pt-section-title">Refulare PEHD Dn110 — Sub presiune</span>
+        <span class="pt-section-title">Refulare PEHD — Sub presiune</span>
         <span class="pt-section-stat">${totalExecRef.toLocaleString('ro-RO')} / ${totalProjRef.toLocaleString('ro-RO')} ml &nbsp;•&nbsp; ${pct(totalExecRef,totalProjRef)}%</span>
       </div>
       ${progressBar(pct(totalExecRef,totalProjRef))}
       <div class="pt-table-wrap">
         <table class="pt-table">
-          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th></tr></thead>
+          <thead><tr><th>Tronson</th><th>Diametru</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th><th>Observații ✏️</th></tr></thead>
           <tbody>
             ${refRows.map(r => {
               const p = pct(r.exec, r.proj);
@@ -1018,16 +1063,18 @@ function renderPtContent(siteId, panel, data) {
               const bg = p >= 100 ? 'rgba(74,222,128,.06)' : p > 0 ? 'rgba(247,183,25,.04)' : '';
               return `<tr style="background:${bg}">
                 <td class="pt-id">${r.id}</td>
+                <td style="font-size:11px;color:#9a9080">${r.dn}</td>
                 <td class="pt-num">${r.proj}</td>
                 <td class="pt-edit" data-cat="refulare" data-id="${r.id}" data-field="exec">${r.exec||''}</td>
                 <td><span style="color:${pctColor(p)};font-weight:700">${p}%</span></td>
                 <td class="pt-num ${rest>0?'pt-rest':''}">${rest > 0 ? rest : '—'}</td>
+                <td class="pt-edit pt-text" data-cat="refulare" data-id="${r.id}" data-field="per">${r.per||''}</td>
               </tr>`;
             }).join('')}
             <tr class="pt-total">
-              <td>TOTAL</td><td>${totalProjRef}</td><td style="color:#f7b719">${totalExecRef}</td>
+              <td>TOTAL</td><td></td><td>${totalProjRef}</td><td style="color:#f7b719">${totalExecRef}</td>
               <td style="color:${pctColor(pct(totalExecRef,totalProjRef))}">${pct(totalExecRef,totalProjRef)}%</td>
-              <td class="pt-rest">${totalProjRef-totalExecRef}</td>
+              <td class="pt-rest">${totalProjRef-totalExecRef}</td><td></td>
             </tr>
           </tbody>
         </table>
@@ -1037,14 +1084,14 @@ function renderPtContent(siteId, panel, data) {
     <!-- APĂ -->
     <div class="pt-section">
       <div class="pt-section-head">
-        <span class="pt-section-icon">🔵</span>
-        <span class="pt-section-title">Apă PEHD Dn110 — Distribuție</span>
-        <span class="pt-section-stat">${totalExecApa} / ${totalProjApa} ml &nbsp;•&nbsp; ${pct(totalExecApa,totalProjApa)}%</span>
+        <span class="pt-section-icon">💧</span>
+        <span class="pt-section-title">Apă PEHD Dn110 — Distribuție (${apaRows.length} tronsoane)</span>
+        <span class="pt-section-stat">${totalExecApa.toLocaleString('ro-RO')} / ${totalProjApa.toLocaleString('ro-RO')} ml &nbsp;•&nbsp; ${pct(totalExecApa,totalProjApa)}%</span>
       </div>
       ${progressBar(pct(totalExecApa,totalProjApa))}
       <div class="pt-table-wrap">
         <table class="pt-table">
-          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th></tr></thead>
+          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th><th>Căm. Vane ✏️</th><th>Branș. ✏️</th><th>Perioadă ✏️</th></tr></thead>
           <tbody>
             ${apaRows.map(r => {
               const p = pct(r.exec, r.proj);
@@ -1056,12 +1103,18 @@ function renderPtContent(siteId, panel, data) {
                 <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="exec">${r.exec||''}</td>
                 <td><span style="color:${pctColor(p)};font-weight:700">${p}%</span></td>
                 <td class="pt-num ${rest>0?'pt-rest':''}">${rest > 0 ? rest : '—'}</td>
+                <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="cv">${r.cv||''}</td>
+                <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="brans">${r.brans||''}</td>
+                <td class="pt-edit pt-text" data-cat="apa" data-id="${r.id}" data-field="per">${r.per||''}</td>
               </tr>`;
             }).join('')}
             <tr class="pt-total">
-              <td>TOTAL</td><td>${totalProjApa}</td><td style="color:#f7b719">${totalExecApa}</td>
+              <td>TOTAL</td><td>${totalProjApa.toLocaleString('ro-RO')}</td>
+              <td style="color:#f7b719">${totalExecApa.toLocaleString('ro-RO')}</td>
               <td style="color:${pctColor(pct(totalExecApa,totalProjApa))}">${pct(totalExecApa,totalProjApa)}%</td>
-              <td class="pt-rest">${totalProjApa-totalExecApa}</td>
+              <td class="pt-rest">${(totalProjApa-totalExecApa).toLocaleString('ro-RO')}</td>
+              <td>${apaRows.reduce((s,r)=>s+r.cv,0)||''}</td>
+              <td>${apaRows.reduce((s,r)=>s+r.brans,0)||''}</td><td></td>
             </tr>
           </tbody>
         </table>
