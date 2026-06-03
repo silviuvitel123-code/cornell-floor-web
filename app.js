@@ -706,6 +706,7 @@ function renderSitesSubmenu() {
   sub.querySelectorAll("[data-site-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
       showSiteDetail(btn.dataset.siteId);
+      closeMobileNav(); // inchide sidebar pe mobil
     });
   });
 }
@@ -1048,15 +1049,31 @@ function bindEvents() {
     sitesNavBtn.addEventListener("click", () => {
       const sub = $("#sitesSubmenu");
       const isOpen = !sub.hidden;
-      if (isOpen) {
-        closeSitesSubmenu();
+      const isMobile = window.innerWidth <= 900;
+
+      if (isMobile) {
+        if (!isOpen) {
+          // Prima apasare pe mobil: deschide dropdown, nu naviga inca
+          renderSitesSubmenu();
+          sub.hidden = false;
+          sitesNavBtn.classList.add("sub-open", "active");
+        } else {
+          // A doua apasare pe mobil: navigheaza la lista santiere
+          closeSitesSubmenu();
+          showView("sites");
+          closeMobileNav();
+        }
       } else {
-        renderSitesSubmenu();
-        sub.hidden = false;
-        sitesNavBtn.classList.add("sub-open", "active");
+        // Desktop: toggle dropdown + navigheaza mereu
+        if (isOpen) {
+          closeSitesSubmenu();
+        } else {
+          renderSitesSubmenu();
+          sub.hidden = false;
+          sitesNavBtn.classList.add("sub-open", "active");
+        }
+        showView("sites");
       }
-      // Intotdeauna navigheaza la lista santiere
-      showView("sites");
     });
   }
 
