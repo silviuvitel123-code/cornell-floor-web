@@ -1293,6 +1293,12 @@ body.auth-locked .workspace {
     padding-right: 16px;
   }
 
+  /* Hero fara margin pe mobil - sidebar ascuns */
+  .hero-shell {
+    margin-left: 0;
+    min-height: 220px;
+  }
+
   .hero-content {
     padding-left: 16px;
     padding-right: 16px;
@@ -1302,8 +1308,6 @@ body.auth-locked .workspace {
   .site-header {
     padding: max(16px, env(safe-area-inset-top)) 70px 16px 16px;
   }
-
-  .hero-shell { min-height: 220px; }
 
   .kicker { font-size: clamp(18px, 5vw, 30px); }
 
