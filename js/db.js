@@ -126,6 +126,17 @@ async function ensureDriveFolder(uid, token) {
   return folder.id;
 }
 
+// ── Progress tracker ──
+export function subscribeToProgress(uid, siteId, onData, onError) {
+  const dbRef = ref(db, `users/${uid}/siteProgress/${siteId}`);
+  onValue(dbRef, (snap) => onData(snap.val() || {}), onError || (() => {}));
+  return () => off(dbRef, 'value');
+}
+
+export async function saveProgress(uid, siteId, data) {
+  await set(ref(db, `users/${uid}/siteProgress/${siteId}`), data);
+}
+
 export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
   const dbRef = ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}`);
   onValue(dbRef, (snap) => {

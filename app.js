@@ -11,6 +11,8 @@ import {
   uploadFile,
   deleteFile,
   getDriveToken,
+  subscribeToProgress,
+  saveProgress,
 } from "./js/db.js";
 
 const storageKey = "cf-cornells-floor-v1";
@@ -793,10 +795,365 @@ function renderSiteDetailContent() {
   loadChapterFiles(currentSiteId, ch);
 }
 
+// ══ DATE SANTIER STRAJA - DIN EXCEL ══
+const STRAJA_CANAL = [
+  { id:'Cm1',  proj:565,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm2',  proj:311,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm3',  proj:250,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm4',  proj:124,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm5',  proj:285,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm6',  proj:480,  exec:480, cv:18, rac:19, obs:'De ridicat CV6.14',  per:'17.10–27.11.2025' },
+  { id:'Cm7',  proj:282,  exec:282, cv:7,  rac:9,  obs:'',                   per:'02.10–17.10.2025' },
+  { id:'Cm8',  proj:100,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm9',  proj:180,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm10', proj:526,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm11', proj:285,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm12', proj:321,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm13', proj:784,  exec:784, cv:14, rac:0,  obs:'',                   per:'09.03–16.03.2026' },
+  { id:'Cm14', proj:486,  exec:486, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm15', proj:401,  exec:401, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm16', proj:169,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm17', proj:509,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm18', proj:150,  exec:150, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm19', proj:225,  exec:225, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm20', proj:150,  exec:150, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm21', proj:1605, exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm22', proj:553,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm23', proj:50,   exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm24', proj:163,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm25', proj:515,  exec:515, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm26', proj:143,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm27', proj:395,  exec:395, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm28', proj:106,  exec:106, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm29', proj:1502, exec:400, cv:0,  rac:0,  obs:'Partial',            per:'' },
+  { id:'Cm30', proj:300,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm31', proj:222,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm32', proj:249,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm33', proj:167,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm34', proj:742,  exec:588, cv:19, rac:0,  obs:'',                   per:'27.11–16.12.2025' },
+  { id:'Cm35', proj:391,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm36', proj:185,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm37', proj:724,  exec:724, cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm38', proj:240,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm39', proj:859,  exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm40', proj:74,   exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+  { id:'Cm41', proj:67,   exec:0,   cv:0,  rac:0,  obs:'',                   per:'' },
+];
+const STRAJA_REFULARE = [
+  { id:'CR1', proj:284 }, { id:'CR2', proj:340 }, { id:'CR3', proj:534 },
+  { id:'CR4', proj:206 }, { id:'CR5', proj:348 }, { id:'CR6', proj:197 },
+  { id:'CR7', proj:202 }, { id:'CR8', proj:298 }, { id:'CR9', proj:795 },
+];
+const STRAJA_APA = [
+  { id:'CD28', proj:710 }, { id:'CD29', proj:242 },
+];
+const STRAJA_BRANSAMENTE = { total: 50 }; // Dn32 apa
+
+let progressUnsubscribe = null;
+let progressData = {};
+let progressSaveTimer = null;
+
+function pct(exec, proj) { return proj > 0 ? Math.min(100, Math.round(exec / proj * 100)) : 0; }
+function fmt(n) { return Number(n || 0).toFixed(1).replace('.0', ''); }
+
+function pctColor(p) {
+  if (p >= 100) return '#4ade80';
+  if (p > 0)   return '#f7b719';
+  return '#9a9080';
+}
+
+function progressBar(p) {
+  const color = pctColor(p);
+  return `<div class="pt-bar-wrap"><div class="pt-bar-fill" style="width:${p}%;background:${color}"></div></div>`;
+}
+
+function renderProgressTracker(siteId, panel) {
+  if (progressUnsubscribe) { progressUnsubscribe(); progressUnsubscribe = null; }
+
+  panel.innerHTML = `
+    <div class="pt-header">
+      <span class="ch-panel-icon">🎯</span>
+      <span class="ch-panel-title">Progres Santier — Straja Apa Canal</span>
+      <span class="pt-saved-badge" id="ptSaved" style="display:none">✓ Salvat</span>
+    </div>
+    <div class="pt-summary-grid" id="ptSummary">Se încarcă...</div>
+    <div id="ptTables"></div>
+  `;
+
+  if (!currentUser || !isFirebaseConfigured()) {
+    panel.querySelector('#ptSummary').innerHTML = '<p class="muted">Conectează-te pentru a accesa progresul.</p>';
+    return;
+  }
+
+  progressUnsubscribe = subscribeToProgress(currentUser.uid, siteId, (data) => {
+    progressData = data;
+    renderPtContent(siteId, panel, data);
+  });
+}
+
+function renderPtContent(siteId, panel, data) {
+  const canal = data.canal || {};
+  const ref_ = data.refulare || {};
+  const apa = data.apa || {};
+  const brans = data.bransamente || {};
+
+  // Merge template cu data salvata
+  const canalRows = STRAJA_CANAL.map(t => ({
+    ...t,
+    exec: Number(canal[t.id]?.exec ?? t.exec),
+    cv:   Number(canal[t.id]?.cv   ?? t.cv),
+    rac:  Number(canal[t.id]?.rac  ?? t.rac),
+    obs:  canal[t.id]?.obs ?? t.obs,
+    per:  canal[t.id]?.per ?? t.per,
+  }));
+  const refRows = STRAJA_REFULARE.map(t => ({
+    ...t, exec: Number(ref_[t.id]?.exec ?? 0),
+  }));
+  const apaRows = STRAJA_APA.map(t => ({
+    ...t, exec: Number(apa[t.id]?.exec ?? 0),
+  }));
+  const bransExec = Number(brans.exec ?? 0);
+
+  const totalProjCanal = canalRows.reduce((s,r) => s+r.proj, 0);
+  const totalExecCanal = canalRows.reduce((s,r) => s+r.exec, 0);
+  const totalProjRef   = refRows.reduce((s,r) => s+r.proj, 0);
+  const totalExecRef   = refRows.reduce((s,r) => s+r.exec, 0);
+  const totalProjApa   = apaRows.reduce((s,r) => s+r.proj, 0);
+  const totalExecApa   = apaRows.reduce((s,r) => s+r.exec, 0);
+  const totalCvCanal   = canalRows.reduce((s,r) => s+r.cv, 0);
+  const totalRacCanal  = canalRows.reduce((s,r) => s+r.rac, 0);
+
+  const totalProj = totalProjCanal + totalProjRef + totalProjApa;
+  const totalExec = totalExecCanal + totalExecRef + totalExecApa;
+  const pctGeneral = pct(totalExec, totalProj);
+
+  const summary = panel.querySelector('#ptSummary');
+  summary.innerHTML = `
+    <div class="pt-card">
+      <p class="pt-lbl">Total Proiectat</p>
+      <p class="pt-val">${(totalProj).toLocaleString('ro-RO')} ml</p>
+    </div>
+    <div class="pt-card">
+      <p class="pt-lbl">Total Executat</p>
+      <p class="pt-val" style="color:#f7b719">${totalExec.toLocaleString('ro-RO')} ml</p>
+    </div>
+    <div class="pt-card">
+      <p class="pt-lbl">Rest de Executat</p>
+      <p class="pt-val" style="color:#f87171">${(totalProj-totalExec).toLocaleString('ro-RO')} ml</p>
+    </div>
+    <div class="pt-card pt-card-wide">
+      <p class="pt-lbl">Progres General — ${pctGeneral}%</p>
+      ${progressBar(pctGeneral)}
+      <div class="pt-mini-stats">
+        <span>Canal: ${pct(totalExecCanal,totalProjCanal)}%</span>
+        <span>Refulare: ${pct(totalExecRef,totalProjRef)}%</span>
+        <span>Apă: ${pct(totalExecApa,totalProjApa)}%</span>
+        <span>Cv executate: ${totalCvCanal}</span>
+        <span>Racorduri: ${totalRacCanal}</span>
+      </div>
+    </div>
+  `;
+
+  const tables = panel.querySelector('#ptTables');
+  tables.innerHTML = `
+    <!-- CANAL -->
+    <div class="pt-section">
+      <div class="pt-section-head">
+        <span class="pt-section-icon">🔵</span>
+        <span class="pt-section-title">Canal PP Dn250 — Gravitațional</span>
+        <span class="pt-section-stat">${totalExecCanal.toLocaleString('ro-RO')} / ${totalProjCanal.toLocaleString('ro-RO')} ml &nbsp;•&nbsp; ${pct(totalExecCanal,totalProjCanal)}%</span>
+      </div>
+      ${progressBar(pct(totalExecCanal,totalProjCanal))}
+      <div class="pt-table-wrap">
+        <table class="pt-table">
+          <thead><tr>
+            <th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th>
+            <th>%</th><th>Rest (m)</th>
+            <th>Camine viz. ✏️</th><th>Racorduri ✏️</th>
+            <th>Perioadă ✏️</th><th>Observații ✏️</th>
+          </tr></thead>
+          <tbody>
+            ${canalRows.map(r => {
+              const p = pct(r.exec, r.proj);
+              const rest = r.proj - r.exec;
+              const bg = p >= 100 ? 'rgba(74,222,128,.06)' : p > 0 ? 'rgba(247,183,25,.04)' : '';
+              return `<tr style="background:${bg}">
+                <td class="pt-id">${r.id}</td>
+                <td class="pt-num">${r.proj}</td>
+                <td class="pt-edit" data-cat="canal" data-id="${r.id}" data-field="exec">${r.exec}</td>
+                <td><span style="color:${pctColor(p)};font-weight:700">${p}%</span></td>
+                <td class="pt-num ${rest>0?'pt-rest':''}">${rest > 0 ? rest : '—'}</td>
+                <td class="pt-edit" data-cat="canal" data-id="${r.id}" data-field="cv">${r.cv||''}</td>
+                <td class="pt-edit" data-cat="canal" data-id="${r.id}" data-field="rac">${r.rac||''}</td>
+                <td class="pt-edit pt-text" data-cat="canal" data-id="${r.id}" data-field="per">${r.per||''}</td>
+                <td class="pt-edit pt-text" data-cat="canal" data-id="${r.id}" data-field="obs">${r.obs||''}</td>
+              </tr>`;
+            }).join('')}
+            <tr class="pt-total">
+              <td>TOTAL</td><td>${totalProjCanal}</td><td style="color:#f7b719">${totalExecCanal}</td>
+              <td style="color:${pctColor(pct(totalExecCanal,totalProjCanal))}">${pct(totalExecCanal,totalProjCanal)}%</td>
+              <td class="pt-rest">${totalProjCanal-totalExecCanal}</td>
+              <td>${totalCvCanal}</td><td>${totalRacCanal}</td><td></td><td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REFULARE -->
+    <div class="pt-section">
+      <div class="pt-section-head">
+        <span class="pt-section-icon">🟡</span>
+        <span class="pt-section-title">Refulare PEHD Dn110 — Sub presiune</span>
+        <span class="pt-section-stat">${totalExecRef.toLocaleString('ro-RO')} / ${totalProjRef.toLocaleString('ro-RO')} ml &nbsp;•&nbsp; ${pct(totalExecRef,totalProjRef)}%</span>
+      </div>
+      ${progressBar(pct(totalExecRef,totalProjRef))}
+      <div class="pt-table-wrap">
+        <table class="pt-table">
+          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th></tr></thead>
+          <tbody>
+            ${refRows.map(r => {
+              const p = pct(r.exec, r.proj);
+              const rest = r.proj - r.exec;
+              const bg = p >= 100 ? 'rgba(74,222,128,.06)' : p > 0 ? 'rgba(247,183,25,.04)' : '';
+              return `<tr style="background:${bg}">
+                <td class="pt-id">${r.id}</td>
+                <td class="pt-num">${r.proj}</td>
+                <td class="pt-edit" data-cat="refulare" data-id="${r.id}" data-field="exec">${r.exec||''}</td>
+                <td><span style="color:${pctColor(p)};font-weight:700">${p}%</span></td>
+                <td class="pt-num ${rest>0?'pt-rest':''}">${rest > 0 ? rest : '—'}</td>
+              </tr>`;
+            }).join('')}
+            <tr class="pt-total">
+              <td>TOTAL</td><td>${totalProjRef}</td><td style="color:#f7b719">${totalExecRef}</td>
+              <td style="color:${pctColor(pct(totalExecRef,totalProjRef))}">${pct(totalExecRef,totalProjRef)}%</td>
+              <td class="pt-rest">${totalProjRef-totalExecRef}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- APĂ -->
+    <div class="pt-section">
+      <div class="pt-section-head">
+        <span class="pt-section-icon">🔵</span>
+        <span class="pt-section-title">Apă PEHD Dn110 — Distribuție</span>
+        <span class="pt-section-stat">${totalExecApa} / ${totalProjApa} ml &nbsp;•&nbsp; ${pct(totalExecApa,totalProjApa)}%</span>
+      </div>
+      ${progressBar(pct(totalExecApa,totalProjApa))}
+      <div class="pt-table-wrap">
+        <table class="pt-table">
+          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th></tr></thead>
+          <tbody>
+            ${apaRows.map(r => {
+              const p = pct(r.exec, r.proj);
+              const rest = r.proj - r.exec;
+              const bg = p >= 100 ? 'rgba(74,222,128,.06)' : p > 0 ? 'rgba(247,183,25,.04)' : '';
+              return `<tr style="background:${bg}">
+                <td class="pt-id">${r.id}</td>
+                <td class="pt-num">${r.proj}</td>
+                <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="exec">${r.exec||''}</td>
+                <td><span style="color:${pctColor(p)};font-weight:700">${p}%</span></td>
+                <td class="pt-num ${rest>0?'pt-rest':''}">${rest > 0 ? rest : '—'}</td>
+              </tr>`;
+            }).join('')}
+            <tr class="pt-total">
+              <td>TOTAL</td><td>${totalProjApa}</td><td style="color:#f7b719">${totalExecApa}</td>
+              <td style="color:${pctColor(pct(totalExecApa,totalProjApa))}">${pct(totalExecApa,totalProjApa)}%</td>
+              <td class="pt-rest">${totalProjApa-totalExecApa}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BRANȘAMENTE -->
+    <div class="pt-section">
+      <div class="pt-section-head">
+        <span class="pt-section-icon">🔗</span>
+        <span class="pt-section-title">Branșamente Apă Dn32 + Racorduri Canal</span>
+        <span class="pt-section-stat">${bransExec} / ${STRAJA_BRANSAMENTE.total} buc &nbsp;•&nbsp; ${pct(bransExec,STRAJA_BRANSAMENTE.total)}%</span>
+      </div>
+      ${progressBar(pct(bransExec,STRAJA_BRANSAMENTE.total))}
+      <div class="pt-table-wrap">
+        <table class="pt-table">
+          <thead><tr><th>Tip</th><th>Total Proiectat</th><th>Executat ✏️</th><th>%</th><th>Rest</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="pt-id">Branșamente</td>
+              <td class="pt-num">${STRAJA_BRANSAMENTE.total} buc</td>
+              <td class="pt-edit" data-cat="bransamente" data-id="total" data-field="exec">${bransExec||''}</td>
+              <td><span style="color:${pctColor(pct(bransExec,STRAJA_BRANSAMENTE.total))};font-weight:700">${pct(bransExec,STRAJA_BRANSAMENTE.total)}%</span></td>
+              <td class="pt-num pt-rest">${STRAJA_BRANSAMENTE.total-bransExec} buc</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="muted pt-hint">✏️ = celuleste editabilă — click pentru a modifica valorile</p>
+  `;
+
+  // Atașează editare inline
+  tables.querySelectorAll('.pt-edit').forEach(cell => {
+    cell.addEventListener('click', () => startPtEdit(cell, siteId));
+  });
+}
+
+function startPtEdit(cell, siteId) {
+  if (cell.querySelector('input')) return;
+  const val = cell.textContent.trim();
+  const isText = cell.classList.contains('pt-text');
+  const input = document.createElement('input');
+  input.type = isText ? 'text' : 'number';
+  input.min = '0';
+  input.value = val;
+  input.className = 'pt-input';
+  cell.textContent = '';
+  cell.appendChild(input);
+  input.focus();
+  input.select();
+
+  const save = () => {
+    const newVal = isText ? input.value.trim() : Math.max(0, parseFloat(input.value) || 0);
+    const cat   = cell.dataset.cat;
+    const id    = cell.dataset.id;
+    const field = cell.dataset.field;
+
+    if (!progressData[cat]) progressData[cat] = {};
+    if (!progressData[cat][id]) progressData[cat][id] = {};
+    progressData[cat][id][field] = newVal;
+
+    // Debounce save 1s
+    clearTimeout(progressSaveTimer);
+    progressSaveTimer = setTimeout(async () => {
+      if (currentUser) {
+        await saveProgress(currentUser.uid, siteId, progressData);
+        const badge = $("#ptSaved");
+        if (badge) { badge.style.display = 'inline'; setTimeout(() => { badge.style.display = 'none'; }, 2000); }
+      }
+    }, 1000);
+
+    // Re-render imediat cu noile date
+    const panel = $("#chapterContent");
+    if (panel) renderPtContent(siteId, panel, progressData);
+  };
+
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+}
+
 function loadChapterFiles(siteId, chapter) {
   const panel = $("#chapterContent");
   if (!panel) return;
   currentChapterKey = chapter.key;
+
+  // Capitol special: Progres santier
+  if (chapter.key === 'progres-santier') {
+    renderProgressTracker(siteId, panel);
+    return;
+  }
 
   panel.innerHTML = `
     <div class="ch-panel-header">
