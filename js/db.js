@@ -10,16 +10,15 @@ import {
   getDatabase,
   ref,
   set,
+  get,
   onValue,
   off,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const PLACEHOLDER = "YOUR_";
-
-// Cloudinary config (fara Firebase Storage)
-const CLOUDINARY_CLOUD = "dqsdmhfj4";
-const CLOUDINARY_PRESET = "avize_cf";
+const GOOGLE_CLIENT_ID = "138240724620-9otfepodaqnf7eg1snvodnm0iaokvigb.apps.googleusercontent.com";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
 export function isFirebaseConfigured() {
   return Boolean(
@@ -71,7 +70,61 @@ export async function saveStateToCloud(uid, payload) {
   await set(dbRef, payload);
 }
 
-// ── File manager via Cloudinary ──
+// ── Google Drive ──
+
+let _driveToken = null;
+let _tokenClient = null;
+
+function getTokenClient() {
+  if (_tokenClient) return _tokenClient;
+  if (!window.google) throw new Error("Google Identity Services nu s-a incarcat.");
+  _tokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: () => {},
+  });
+  return _tokenClient;
+}
+
+export function getDriveToken() {
+  return new Promise((resolve, reject) => {
+    if (_driveToken && _driveToken.expiresAt > Date.now()) {
+      return resolve(_driveToken.token);
+    }
+    const client = getTokenClient();
+    client.callback = (resp) => {
+      if (resp.error) return reject(new Error(resp.error));
+      _driveToken = {
+        token: resp.access_token,
+        expiresAt: Date.now() + (resp.expires_in - 60) * 1000,
+      };
+      resolve(resp.access_token);
+    };
+    client.requestAccessToken({ prompt: _driveToken ? "" : "consent" });
+  });
+}
+
+async function ensureDriveFolder(uid, token) {
+  // Verifica daca avem deja folder ID salvat
+  const snap = await get(ref(db, `users/${uid}/driveSetup/folderId`));
+  if (snap.val()) return snap.val();
+
+  // Creaza folderul "Cornell's Floor"
+  const res = await fetch("https://www.googleapis.com/drive/v3/files", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: "Cornell's Floor",
+      mimeType: "application/vnd.google-apps.folder",
+    }),
+  });
+  const folder = await res.json();
+  await set(ref(db, `users/${uid}/driveSetup/folderId`), folder.id);
+  return folder.id;
+}
 
 export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
   const dbRef = ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}`);
@@ -85,87 +138,78 @@ export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
   return () => off(dbRef, "value");
 }
 
-function cloudinaryResourceType(file) {
-  const t = (file.type || "").toLowerCase();
-  const n = (file.name || "").toLowerCase();
-  if (t.startsWith("image/") || n.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff)$/)) return "image";
-  if (t.startsWith("video/") || n.match(/\.(mp4|mov|avi|mkv)$/)) return "video";
-  return "raw"; // PDF, DOCX, DWG, XLSX etc
-}
-
 export async function uploadFile(uid, siteId, chapterKey, file, onProgress) {
+  const token = await getDriveToken();
+  const folderId = await ensureDriveFolder(uid, token);
+
   const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const resourceType = cloudinaryResourceType(file);
-  const publicId = `cf_${fileId}`;
 
-  // Folosim XHR pentru progress real, cu fallback la fetch
-  const uploadResult = await new Promise((resolve, reject) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_PRESET);
-    formData.append("public_id", publicId);
+  // Upload multipart catre Google Drive
+  const metadata = JSON.stringify({
+    name: file.name,
+    parents: [folderId],
+  });
 
+  const form = new FormData();
+  form.append("metadata", new Blob([metadata], { type: "application/json" }));
+  form.append("file", file);
+
+  // Folosim XHR pentru progress
+  const result = await new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${resourceType}/upload`);
+    xhr.open("POST", "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size,webViewLink,webContentLink");
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress && onProgress(Math.round(e.loaded / e.total * 100));
     };
 
     xhr.onload = () => {
-      if (xhr.status === 200) {
+      if (xhr.status === 200 || xhr.status === 201) {
         resolve(JSON.parse(xhr.responseText));
       } else {
-        // Incearca cu /auto daca /raw a esuat
-        const fallback = new XMLHttpRequest();
-        fallback.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
-        const fd2 = new FormData();
-        fd2.append("file", file);
-        fd2.append("upload_preset", CLOUDINARY_PRESET);
-        fd2.append("public_id", publicId + "_a");
-        fallback.onload = () => {
-          if (fallback.status === 200) resolve(JSON.parse(fallback.responseText));
-          else reject(new Error("Upload eșuat: " + fallback.responseText));
-        };
-        fallback.onerror = () => reject(new Error("Eroare rețea. Verifică conexiunea și încearcă din nou."));
-        fallback.send(fd2);
+        reject(new Error("Upload Drive eșuat: " + xhr.responseText));
       }
     };
+    xhr.onerror = () => reject(new Error("Eroare rețea la upload Drive."));
+    xhr.send(form);
+  });
 
-    xhr.onerror = () => {
-      // Fallback la fetch
-      const fd2 = new FormData();
-      fd2.append("file", file);
-      fd2.append("upload_preset", CLOUDINARY_PRESET);
-      fd2.append("public_id", publicId + "_b");
-      fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, { method: "POST", body: fd2 })
-        .then(r => r.json())
-        .then(result => {
-          if (result.secure_url) resolve(result);
-          else reject(new Error(result.error?.message || "Upload eșuat"));
-        })
-        .catch(e => reject(new Error("Eroare rețea: " + e.message)));
-    };
-
-    xhr.send(formData);
+  // Seteaza permisiunea de citire publica (pentru preview)
+  await fetch(`https://www.googleapis.com/drive/v3/files/${result.id}/permissions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ role: "reader", type: "anyone" }),
   });
 
   const meta = {
     fileId,
+    driveId: result.id,
     name: file.name,
     size: file.size,
-    type: file.type || uploadResult.resource_type,
+    type: file.type,
     uploadedAt: new Date().toISOString(),
-    publicId: uploadResult.public_id,
-    downloadURL: uploadResult.secure_url,
-    resourceType: uploadResult.resource_type,
+    downloadURL: `https://drive.google.com/uc?export=download&id=${result.id}`,
+    viewURL: `https://drive.google.com/file/d/${result.id}/view`,
+    previewURL: `https://drive.google.com/file/d/${result.id}/preview`,
   };
+
   await set(ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}/${fileId}`), meta);
   return meta;
 }
 
-export async function deleteFile(uid, siteId, chapterKey, fileId) {
-  // Sterge doar din Realtime DB (metadate)
-  // Fisierul ramane in Cloudinary dar nu mai e accesibil din app
+export async function deleteFile(uid, siteId, chapterKey, fileId, driveId) {
+  if (driveId) {
+    try {
+      const token = await getDriveToken();
+      await fetch(`https://www.googleapis.com/drive/v3/files/${driveId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {}
+  }
   await set(ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}/${fileId}`), null);
 }

@@ -10,6 +10,7 @@ import {
   subscribeToFiles,
   uploadFile,
   deleteFile,
+  getDriveToken,
 } from "./js/db.js";
 
 const storageKey = "cf-cornells-floor-v1";
@@ -819,7 +820,15 @@ function loadChapterFiles(siteId, chapter) {
 
   const input = $("#fileInput");
   const zone = $("#uploadZone");
-  $("#pickFiles").addEventListener("click", () => input.click());
+  $("#pickFiles").addEventListener("click", async () => {
+    // Autorizeaza Google Drive la primul click
+    try {
+      await getDriveToken();
+      input.click();
+    } catch (e) {
+      notify("Conectare Google Drive necesară: " + e.message);
+    }
+  });
   input.addEventListener("change", () => handleUpload(Array.from(input.files), siteId, chapter.key));
   zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("drag-over"); });
   zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
@@ -851,27 +860,20 @@ function showChapter(siteId, chapterKey, chapterTitle) {
 }
 
 function getViewerBtn(f) {
-  const url = encodeURIComponent(f.downloadURL);
+  // Toate fisierele uploadate pe Drive au viewURL
+  if (f.viewURL) {
+    return `<a class="file-btn file-btn-view" href="${escapeAttr(f.viewURL)}" target="_blank" rel="noopener">Vizualizare</a>`;
+  }
+  // Fallback pentru fisiere vechi (Cloudinary)
   const t = (f.type || "").toLowerCase();
   const name = (f.name || "").toLowerCase();
-
-  // PDF — deschide direct in browser
-  if (t.includes("pdf") || name.endsWith(".pdf")) {
+  if (t.includes("pdf") || name.endsWith(".pdf") || t.includes("image") || name.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
     return `<a class="file-btn file-btn-view" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">Vizualizare</a>`;
   }
-  // Word, Excel, PowerPoint — Office Online Viewer
-  if (t.includes("word") || t.includes("officedocument") || t.includes("msword") ||
-      name.endsWith(".doc") || name.endsWith(".docx") ||
-      name.endsWith(".xls") || name.endsWith(".xlsx") ||
-      name.endsWith(".ppt") || name.endsWith(".pptx")) {
-    const officeUrl = `https://view.officeapps.live.com/op/view.aspx?src=${url}`;
+  if (name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/)) {
+    const officeUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(f.downloadURL)}`;
     return `<a class="file-btn file-btn-view" href="${escapeAttr(officeUrl)}" target="_blank" rel="noopener">Vizualizare</a>`;
   }
-  // Imagini — deschide direct
-  if (t.includes("image") || name.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-    return `<a class="file-btn file-btn-view" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">Vizualizare</a>`;
-  }
-  // DWG, alte formate — nu se pot previzualiza
   return `<span class="file-btn" style="opacity:.4;cursor:default">Fără preview</span>`;
 }
 
@@ -967,7 +969,7 @@ function renderFileList(files, siteId, chapterKey) {
       <div class="file-actions">
         ${getViewerBtn(f)}
         <a class="file-btn" href="${escapeAttr(f.downloadURL)}" download="${escapeAttr(f.name)}" target="_blank" rel="noopener">Descarcă</a>
-        <button class="file-btn file-btn-del" data-fid="${escapeAttr(f.fileId)}">Șterge</button>
+        <button class="file-btn file-btn-del" data-fid="${escapeAttr(f.fileId)}" data-drid="${escapeAttr(f.driveId || "")}">Șterge</button>
       </div>
     </div>
   `).join("");
@@ -978,7 +980,7 @@ function renderFileList(files, siteId, chapterKey) {
       btn.disabled = true;
       btn.textContent = "Se șterge...";
       try {
-        await deleteFile(currentUser.uid, siteId, chapterKey, btn.dataset.fid);
+        await deleteFile(currentUser.uid, siteId, chapterKey, btn.dataset.fid, btn.dataset.drid);
       } catch (e) {
         notify("Eroare la ștergere: " + e.message);
         btn.disabled = false;
