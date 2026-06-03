@@ -943,7 +943,7 @@ function renderFileList(files, siteId, chapterKey) {
         <a class="file-btn" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">
           ${f.type.includes("pdf") ? "Vizualizare" : "Descarcă"}
         </a>
-        <button class="file-btn file-btn-del" data-fid="${escapeAttr(f.fileId)}" data-path="${escapeAttr(f.storagePath)}">Șterge</button>
+        <button class="file-btn file-btn-del" data-fid="${escapeAttr(f.fileId)}">Șterge</button>
       </div>
     </div>
   `).join("");
@@ -954,7 +954,7 @@ function renderFileList(files, siteId, chapterKey) {
       btn.disabled = true;
       btn.textContent = "Se șterge...";
       try {
-        await deleteFile(currentUser.uid, siteId, chapterKey, btn.dataset.fid, btn.dataset.path);
+        await deleteFile(currentUser.uid, siteId, chapterKey, btn.dataset.fid);
       } catch (e) {
         notify("Eroare la ștergere: " + e.message);
         btn.disabled = false;

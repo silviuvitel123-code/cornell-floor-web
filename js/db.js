@@ -13,16 +13,13 @@ import {
   onValue,
   off,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
-import {
-  getStorage,
-  ref as sRef,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const PLACEHOLDER = "YOUR_";
+
+// Cloudinary config (fara Firebase Storage)
+const CLOUDINARY_CLOUD = "dqsdmhfj4";
+const CLOUDINARY_PRESET = "avize_cf";
 
 export function isFirebaseConfigured() {
   return Boolean(
@@ -35,14 +32,12 @@ export function isFirebaseConfigured() {
 let app = null;
 let auth = null;
 let db = null;
-let storage = null;
 
 export function initFirebase() {
   if (!isFirebaseConfigured()) return false;
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getDatabase(app);
-  storage = getStorage(app);
   return true;
 }
 
@@ -76,7 +71,7 @@ export async function saveStateToCloud(uid, payload) {
   await set(dbRef, payload);
 }
 
-// ── File manager ──
+// ── File manager via Cloudinary ──
 
 export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
   const dbRef = ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}`);
@@ -93,37 +88,50 @@ export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
 export function uploadFile(uid, siteId, chapterKey, file, onProgress) {
   return new Promise((resolve, reject) => {
     const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, "_");
-    const path = `users/${uid}/${siteId}/${chapterKey}/${fileId}_${safeName}`;
-    const fileRef = sRef(storage, path);
-    const task = uploadBytesResumable(fileRef, file);
+    const publicId = `cf/${uid}/${siteId}/${chapterKey}/${fileId}`;
 
-    task.on(
-      "state_changed",
-      (snap) => {
-        const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-        onProgress && onProgress(pct);
-      },
-      reject,
-      async () => {
-        const downloadURL = await getDownloadURL(task.snapshot.ref);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_PRESET);
+    formData.append("public_id", publicId);
+    formData.append("resource_type", "auto");
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress && onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = async () => {
+      if (xhr.status === 200) {
+        const result = JSON.parse(xhr.responseText);
         const meta = {
           fileId,
           name: file.name,
           size: file.size,
-          type: file.type || "application/octet-stream",
+          type: file.type || result.resource_type,
           uploadedAt: new Date().toISOString(),
-          storagePath: path,
-          downloadURL,
+          publicId: result.public_id,
+          downloadURL: result.secure_url,
+          resourceType: result.resource_type,
         };
         await set(ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}/${fileId}`), meta);
         resolve(meta);
+      } else {
+        reject(new Error("Upload Cloudinary eșuat: " + xhr.responseText));
       }
-    );
+    };
+
+    xhr.onerror = () => reject(new Error("Eroare rețea la upload"));
+    xhr.send(formData);
   });
 }
 
-export async function deleteFile(uid, siteId, chapterKey, fileId, storagePath) {
-  await deleteObject(sRef(storage, storagePath));
+export async function deleteFile(uid, siteId, chapterKey, fileId) {
+  // Sterge doar din Realtime DB (metadate)
+  // Fisierul ramane in Cloudinary dar nu mai e accesibil din app
   await set(ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}/${fileId}`), null);
 }
