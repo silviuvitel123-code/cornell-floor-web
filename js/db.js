@@ -85,19 +85,28 @@ export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
   return () => off(dbRef, "value");
 }
 
+function cloudinaryResourceType(file) {
+  const t = (file.type || "").toLowerCase();
+  const n = (file.name || "").toLowerCase();
+  if (t.startsWith("image/") || n.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff)$/)) return "image";
+  if (t.startsWith("video/") || n.match(/\.(mp4|mov|avi|mkv)$/)) return "video";
+  return "raw"; // PDF, DOCX, DWG, XLSX etc
+}
+
 export function uploadFile(uid, siteId, chapterKey, file, onProgress) {
   return new Promise((resolve, reject) => {
     const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const publicId = `cf/${uid}/${siteId}/${chapterKey}/${fileId}`;
+    const resourceType = cloudinaryResourceType(file);
+    // public_id scurt si sigur
+    const publicId = `cf_${fileId}`;
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_PRESET);
     formData.append("public_id", publicId);
-    formData.append("resource_type", "auto");
 
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${resourceType}/upload`);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -125,7 +134,9 @@ export function uploadFile(uid, siteId, chapterKey, file, onProgress) {
       }
     };
 
-    xhr.onerror = () => reject(new Error("Eroare rețea la upload"));
+    xhr.onerror = () => reject(new Error(`Eroare rețea (${resourceType}). Verifică conexiunea.`));
+    xhr.ontimeout = () => reject(new Error("Timeout - fișierul e prea mare sau conexiunea e slabă."));
+    xhr.timeout = 120000; // 2 minute timeout
     xhr.send(formData);
   });
 }
