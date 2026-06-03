@@ -414,16 +414,30 @@ body.menu-open {
 
 .pt-table-wrap { overflow-x:auto; margin-top:10px; }
 .pt-table { width:100%; border-collapse:collapse; font-size:13px; }
-.pt-table th { background:#1c1b18; color:#9a9080; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:8px 10px; text-align:left; border-bottom:2px solid #3d3a34; white-space:nowrap; }
-.pt-table td { padding:7px 10px; border-bottom:1px solid #2a2826; color:#e8e0d0; }
+.pt-table th {
+  background:#1c1b18; color:#9a9080; font-size:10px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.06em; padding:9px 12px;
+  text-align:center; border-bottom:2px solid #3d3a34; white-space:nowrap;
+}
+.pt-table td {
+  padding:8px 12px; border-bottom:1px solid #2a2826;
+  color:#e8e0d0; text-align:center; vertical-align:middle;
+}
 .pt-table tr:hover { background:rgba(255,255,255,.02); }
+/* Prima coloana (Tronson) - stanga */
+.pt-table td:first-child, .pt-table th:first-child { text-align:left; }
+/* Ultima coloana (Observatii/text) - stanga */
+.pt-table td:last-child, .pt-table th:last-child { text-align:left; }
+/* Penultima coloana (Perioada) - stanga */
+.pt-table td:nth-last-child(2), .pt-table th:nth-last-child(2) { text-align:left; }
+
 .pt-id { font-weight:800; color:#c9a84c; font-size:13px; }
-.pt-num { text-align:right; font-family:monospace; }
+.pt-num { font-family:monospace; }
 .pt-rest { color:#f87171; }
 .pt-edit { cursor:pointer; border-bottom:1px dashed #3d3a34; min-width:60px; }
 .pt-edit:hover { background:rgba(247,183,25,.08); border-bottom-color:#f7b719; }
-.pt-text { min-width:120px; }
-.pt-input { background:#1c1b18; border:1px solid #f7b719; color:#e8e0d0; border-radius:4px; padding:3px 6px; width:90%; font-size:13px; font-family:monospace; }
+.pt-text { min-width:120px; text-align:left !important; }
+.pt-input { background:#1c1b18; border:1px solid #f7b719; color:#e8e0d0; border-radius:4px; padding:4px 8px; width:90%; font-size:13px; font-family:monospace; }
 .pt-total { background:#1c1b18 !important; font-weight:800; border-top:2px solid #3d3a34; }
 .pt-hint { font-size:11px; color:#6a6050; margin-top:16px; text-align:center; }
 
