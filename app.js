@@ -850,6 +850,31 @@ function showChapter(siteId, chapterKey, chapterTitle) {
   $(".workspace").scrollIntoView({ behavior: "smooth" });
 }
 
+function getViewerBtn(f) {
+  const url = encodeURIComponent(f.downloadURL);
+  const t = (f.type || "").toLowerCase();
+  const name = (f.name || "").toLowerCase();
+
+  // PDF — deschide direct in browser
+  if (t.includes("pdf") || name.endsWith(".pdf")) {
+    return `<a class="file-btn file-btn-view" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">Vizualizare</a>`;
+  }
+  // Word, Excel, PowerPoint — Office Online Viewer
+  if (t.includes("word") || t.includes("officedocument") || t.includes("msword") ||
+      name.endsWith(".doc") || name.endsWith(".docx") ||
+      name.endsWith(".xls") || name.endsWith(".xlsx") ||
+      name.endsWith(".ppt") || name.endsWith(".pptx")) {
+    const officeUrl = `https://view.officeapps.live.com/op/view.aspx?src=${url}`;
+    return `<a class="file-btn file-btn-view" href="${escapeAttr(officeUrl)}" target="_blank" rel="noopener">Vizualizare</a>`;
+  }
+  // Imagini — deschide direct
+  if (t.includes("image") || name.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+    return `<a class="file-btn file-btn-view" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">Vizualizare</a>`;
+  }
+  // DWG, alte formate — nu se pot previzualiza
+  return `<span class="file-btn" style="opacity:.4;cursor:default">Fără preview</span>`;
+}
+
 function fileIcon(type) {
   if (type.includes("pdf")) return "📄";
   if (type.includes("word") || type.includes("docx") || type.includes("doc")) return "📝";
@@ -940,9 +965,8 @@ function renderFileList(files, siteId, chapterKey) {
         <span class="file-meta">${formatSize(f.size)} · ${new Date(f.uploadedAt).toLocaleDateString("ro-RO")}</span>
       </div>
       <div class="file-actions">
-        <a class="file-btn" href="${escapeAttr(f.downloadURL)}" target="_blank" rel="noopener">
-          ${f.type.includes("pdf") ? "Vizualizare" : "Descarcă"}
-        </a>
+        ${getViewerBtn(f)}
+        <a class="file-btn" href="${escapeAttr(f.downloadURL)}" download="${escapeAttr(f.name)}" target="_blank" rel="noopener">Descarcă</a>
         <button class="file-btn file-btn-del" data-fid="${escapeAttr(f.fileId)}">Șterge</button>
       </div>
     </div>

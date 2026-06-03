@@ -434,6 +434,8 @@ body.menu-open {
 .file-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .file-btn { padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 700; border: 1px solid #3d3a34; background: #1c1b18; color: #e8e0d0; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.15s, color 0.15s; }
 .file-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+.file-btn-view { border-color: rgba(247,183,25,.4); color: var(--yellow); }
+.file-btn-view:hover { border-color: var(--yellow); background: rgba(247,183,25,.08); }
 .file-btn-del { color: #9a9080; }
 .file-btn-del:hover { border-color: #f87171; color: #f87171; }
 
