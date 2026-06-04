@@ -982,17 +982,17 @@ function renderPtContent(siteId, panel, data) {
       <p style="text-align:right;font-size:11px;color:${color};font-weight:700;margin-top:3px">${pct(exec,proj)}%</p>
     </div>`;
 
+  const totalRest = totalProj - totalExec;
   summary.innerHTML = `
-    ${mkCard('🔵 Canal PP Dn250', totalProjCanal, totalExecCanal, '#f7b719')}
-    ${mkCard('🟡 Refulare PEHD Dn110', totalProjRef, totalExecRef, '#f7b719')}
-    ${mkCard('💧 Apă PEHD Dn110', totalProjApa, totalExecApa, '#f7b719')}
+    ${mkCard('Canal', totalProjCanal, totalExecCanal, '#f7b719')}
+    ${mkCard('Refulare', totalProjRef, totalExecRef, '#f7b719')}
+    ${mkCard('Apă', totalProjApa, totalExecApa, '#f7b719')}
     <div class="pt-card">
       <p class="pt-lbl">Progres General — ${pctGeneral}%</p>
       ${progressBar(pctGeneral)}
-      <div class="pt-mini-stats" style="margin-top:10px">
-        <span>Cv canal: ${totalCvCanal}</span>
-        <span>Racorduri: ${totalRacCanal}</span>
-        <span>Branș. apă: ${apaRows.reduce((s,r)=>s+(r.brans||0),0)}</span>
+      <div style="margin-top:10px">
+        <p class="pt-sub">Rest total de executat</p>
+        <p style="font-size:18px;font-weight:800;color:#f87171">${totalRest.toLocaleString('ro-RO')} ml</p>
       </div>
     </div>
   `;
@@ -1089,7 +1089,7 @@ function renderPtContent(siteId, panel, data) {
       ${progressBar(pct(totalExecApa,totalProjApa))}
       <div class="pt-table-wrap">
         <table class="pt-table">
-          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th><th>Căm. Vane ✏️</th><th>Branș. ✏️</th><th>Perioadă ✏️</th></tr></thead>
+          <thead><tr><th>Tronson</th><th>Proiectat (m)</th><th>Executat (m) ✏️</th><th>%</th><th>Rest (m)</th><th>Căm. Vane ✏️</th><th>Hidranți ✏️</th><th>Branș. ✏️</th><th>Perioadă ✏️</th></tr></thead>
           <tbody>
             ${apaRows.map(r => {
               const p = pct(r.exec, r.proj);
@@ -1102,6 +1102,7 @@ function renderPtContent(siteId, panel, data) {
                 <td><span style="color:${pctColor(p)};font-weight:700">${p}%</span></td>
                 <td class="pt-num ${rest>0?'pt-rest':''}">${rest > 0 ? rest : '—'}</td>
                 <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="cv">${r.cv||''}</td>
+                <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="hidranti">${r.hidranti||''}</td>
                 <td class="pt-edit" data-cat="apa" data-id="${r.id}" data-field="brans">${r.brans||''}</td>
                 <td class="pt-edit pt-text" data-cat="apa" data-id="${r.id}" data-field="per">${r.per||''}</td>
               </tr>`;
@@ -1111,8 +1112,9 @@ function renderPtContent(siteId, panel, data) {
               <td style="color:#f7b719">${totalExecApa.toLocaleString('ro-RO')}</td>
               <td style="color:${pctColor(pct(totalExecApa,totalProjApa))}">${pct(totalExecApa,totalProjApa)}%</td>
               <td class="pt-rest">${(totalProjApa-totalExecApa).toLocaleString('ro-RO')}</td>
-              <td>${apaRows.reduce((s,r)=>s+r.cv,0)||''}</td>
-              <td>${apaRows.reduce((s,r)=>s+r.brans,0)||''}</td><td></td>
+              <td>${apaRows.reduce((s,r)=>s+(r.cv||0),0)||''}</td>
+              <td>${apaRows.reduce((s,r)=>s+(r.hidranti||0),0)||''}</td>
+              <td>${apaRows.reduce((s,r)=>s+(r.brans||0),0)||''}</td><td></td>
             </tr>
           </tbody>
         </table>
