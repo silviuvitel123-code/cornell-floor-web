@@ -970,28 +970,29 @@ function renderPtContent(siteId, panel, data) {
   const pctGeneral = pct(totalExec, totalProj);
 
   const summary = panel.querySelector('#ptSummary');
+  const mkCard = (label, proj, exec, color) => `
+    <div class="pt-card">
+      <p class="pt-lbl">${label}</p>
+      <div class="pt-card-row">
+        <div><p class="pt-sub">Proiectat</p><p class="pt-val-sm">${proj.toLocaleString('ro-RO')} ml</p></div>
+        <div><p class="pt-sub">Executat</p><p class="pt-val-sm" style="color:${color}">${exec.toLocaleString('ro-RO')} ml</p></div>
+        <div><p class="pt-sub">Rest</p><p class="pt-val-sm" style="color:#f87171">${(proj-exec).toLocaleString('ro-RO')} ml</p></div>
+      </div>
+      ${progressBar(pct(exec,proj))}
+      <p style="text-align:right;font-size:11px;color:${color};font-weight:700;margin-top:3px">${pct(exec,proj)}%</p>
+    </div>`;
+
   summary.innerHTML = `
+    ${mkCard('🔵 Canal PP Dn250', totalProjCanal, totalExecCanal, '#f7b719')}
+    ${mkCard('🟡 Refulare PEHD Dn110', totalProjRef, totalExecRef, '#f7b719')}
+    ${mkCard('💧 Apă PEHD Dn110', totalProjApa, totalExecApa, '#f7b719')}
     <div class="pt-card">
-      <p class="pt-lbl">Total Proiectat</p>
-      <p class="pt-val">${(totalProj).toLocaleString('ro-RO')} ml</p>
-    </div>
-    <div class="pt-card">
-      <p class="pt-lbl">Total Executat</p>
-      <p class="pt-val" style="color:#f7b719">${totalExec.toLocaleString('ro-RO')} ml</p>
-    </div>
-    <div class="pt-card">
-      <p class="pt-lbl">Rest de Executat</p>
-      <p class="pt-val" style="color:#f87171">${(totalProj-totalExec).toLocaleString('ro-RO')} ml</p>
-    </div>
-    <div class="pt-card pt-card-wide">
       <p class="pt-lbl">Progres General — ${pctGeneral}%</p>
       ${progressBar(pctGeneral)}
-      <div class="pt-mini-stats">
-        <span>Canal: ${pct(totalExecCanal,totalProjCanal)}%</span>
-        <span>Refulare: ${pct(totalExecRef,totalProjRef)}%</span>
-        <span>Apă: ${pct(totalExecApa,totalProjApa)}%</span>
-        <span>Cv executate: ${totalCvCanal}</span>
+      <div class="pt-mini-stats" style="margin-top:10px">
+        <span>Cv canal: ${totalCvCanal}</span>
         <span>Racorduri: ${totalRacCanal}</span>
+        <span>Branș. apă: ${apaRows.reduce((s,r)=>s+(r.brans||0),0)}</span>
       </div>
     </div>
   `;
