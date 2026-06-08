@@ -236,6 +236,7 @@ async function sendMessage(userText, ctx) {
 
 let finalTranscript = '';
 let voiceCancelled = false;
+let inputFilledByVoice = false; // textul din input a venit din dictare -> raspuns vocal chiar daca apesi Trimite
 
 function startListening(onFinal, onError) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -259,6 +260,7 @@ function startListening(onFinal, onError) {
     }
     const inputEl = document.getElementById('aiInput');
     if (inputEl) inputEl.value = (finalTranscript + interim).trim();
+    inputFilledByVoice = true;
   };
   recognition.onerror = (e) => {
     if (e.error === 'aborted' || e.error === 'no-speech') return; // benigne, le ignoram
@@ -291,9 +293,26 @@ function cancelListening() {
   updateMicBtn();
 }
 
+let speechPrimed = false;
+
+// Deblocheaza sinteza vocala in cadrul unui gest al utilizatorului (necesar pe telefon).
+// Browserele mobile blocheaza speechSynthesis daca nu a fost pornit dintr-un tap.
+function primeSpeech() {
+  if (!synth) return;
+  try { synth.resume(); } catch {}
+  if (speechPrimed) return;
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0; // silentios — doar deblocheaza
+    synth.speak(u);
+    speechPrimed = true;
+  } catch {}
+}
+
 function speak(text) {
   if (!synth) return;
-  synth.cancel();
+  try { synth.cancel(); } catch {}
+  try { synth.resume(); } catch {} // pe mobil sinteza poate fi in pauza
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'ro-RO';
   utt.rate = 1.05;
@@ -352,16 +371,21 @@ function initUI(ctx) {
     synth?.cancel();
   });
 
+  // Tastarea manuala anuleaza flag-ul de voce (setarea programatica a .value nu declanseaza 'input')
+  input?.addEventListener('input', () => { inputFilledByVoice = false; });
+
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = input.value.trim();
     if (!text) return;
+    const viaVoice = inputFilledByVoice; // daca textul a venit din dictare, raspunde si vocal
     input.value = '';
-    // Intrebare scrisa -> raspuns doar in scris (fara voce)
-    await handleUserMessage(text, ctx, false);
+    inputFilledByVoice = false;
+    await handleUserMessage(text, ctx, viaVoice);
   });
 
   micBtn?.addEventListener('click', () => {
+    primeSpeech(); // deblocheaza vocea acum, in cadrul tap-ului (esential pe telefon)
     if (isListening) {
       stopListening();
     } else {
