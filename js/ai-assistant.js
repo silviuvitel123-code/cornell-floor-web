@@ -11,6 +11,38 @@ let isListening = false;
 let recognition = null;
 let synth = window.speechSynthesis;
 
+// Date reale extrase din proiectul tehnic (Liste cantitati + Excel Santier Straja)
+const STRAJA_PROJECT_INFO = `== INFORMATII PROIECT TEHNIC STRAJA ==
+Obiectiv: Extinderea retelei de distributie a apei si extinderea retelei de canalizare in comuna Straja, judetul Suceava.
+Beneficiar: Comuna Straja
+Proiectant: S.C. CONALID S.R.L. (Iasi)
+Faza proiectare: P.TH. + C.S. + D.D.E.
+Contract: 6690 / 18.09.2024
+
+RETEA CANALIZARE menajera (gravitationala):
+- Material: PP Multistrat Corugat SN8, Dn 250 mm
+- Total proiectat: 15.835 m | Executat (la ultima actualizare): 5.686 m
+- 41 tronsoane (Cm1 - Cm41)
+- Camine de vizitare (CV) si camine de racord
+- Include subtraversari drumuri si vai, refacere drumuri (balastate, asfaltate, beton)
+
+RETEA REFULARE (canalizare sub presiune):
+- Material: PEHD-RC cu protectie PP, PE100, Pn10
+- Dn 90 mm: 2.409 m + Dn 110 mm: 795 m = 3.204 m total proiectat
+- 9 tronsoane (CR1 - CR9)
+
+RETEA APA POTABILA (distributie):
+- Material: PEHD-RC cu protectie PP, PE100, Pn10
+- 34 tronsoane (CD1 - CD20, CD22 - CD35)
+- Camine de vane si bransamente
+
+STATII DE POMPARE APA UZATA (SPAU):
+- 9 statii de pompare: SPAU 1 ... SPAU 9, fiecare cu racord electric propriu
+
+Tipuri camine: vizitare (canal), racord (canal), vane (apa si refulare), bransament (apa).
+
+NOTA: Datele sunt la nivel de TRONSON. Lungimile individuale intre doua camine (ex: de la CV21.30 la CV21.56) NU exista in baza de date - se gasesc doar pe profilele longitudinale din plansele de proiect. Daca esti intrebat despre un segment intre doua camine, spune onest ca acea valoare e pe plansa (profil longitudinal), nu in datele disponibile. NU inventa cifre.`;
+
 // ── Sistem prompt generat din datele live ─────────────────────────────────────
 
 function buildSystemPrompt(state, progressData, canal, refulare, apa) {
@@ -64,6 +96,8 @@ function buildSystemPrompt(state, progressData, canal, refulare, apa) {
   return `Esti asistentul AI al inginerului Vitel Silviu de la firma Cornell's Floor. \
 Lucrezi pe santierul STRAJA (sistem apa-canal). Raspunzi DOAR in limba romana, concis si direct. \
 Ai acces la toate datele de mai jos si poti raspunde imediat fara sa cauti — le stii deja.
+
+${STRAJA_PROJECT_INFO}
 
 == SANTIER STRAJA — CANAL GRAVITATIONAL ==
 Total proiectat: ${totalProjCanal}m | Executat: ${totalExecCanalLive}m | Ramas: ${totalProjCanal - totalExecCanalLive}m
