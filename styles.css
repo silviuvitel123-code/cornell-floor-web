@@ -1656,9 +1656,17 @@ body.auth-locked .workspace {
   align-items: center;
   justify-content: center;
 }
-.ai-mic-btn { background: #353330; color: var(--muted); }
-.ai-mic-btn:hover,
-.ai-mic-btn.ai-mic-active { background: #4a3a1a; color: var(--yellow); }
+.ai-mic-btn { background: #353330; color: var(--muted); transition: background 0.2s, color 0.2s; }
+.ai-mic-btn:hover { background: #4a3a1a; color: var(--yellow); }
+.ai-mic-btn.ai-mic-active {
+  background: #e5484d;
+  color: #fff;
+  animation: ai-mic-pulse 1.2s infinite;
+}
+@keyframes ai-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55); }
+  50%      { box-shadow: 0 0 0 7px rgba(229, 72, 77, 0); }
+}
 .ai-mic-btn svg, .ai-send-btn svg { width: 16px; height: 16px; }
 .ai-send-btn { background: var(--yellow); color: var(--black); }
 .ai-send-btn:hover { background: var(--yellow-dark); }

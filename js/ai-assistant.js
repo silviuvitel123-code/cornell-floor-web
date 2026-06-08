@@ -232,28 +232,59 @@ async function sendMessage(userText, ctx) {
 
 // ── Voice ────────────────────────────────────────────────────────────────────
 
-function startListening(onResult, onError) {
+let finalTranscript = '';
+let voiceCancelled = false;
+
+function startListening(onFinal, onError) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) { onError('Browserul nu suporta recunoastere vocala.'); return; }
 
+  finalTranscript = '';
+  voiceCancelled = false;
+
   recognition = new SpeechRecognition();
   recognition.lang = 'ro-RO';
-  recognition.interimResults = false;
+  recognition.interimResults = true;  // arata textul live in input
+  recognition.continuous = true;      // ramane pornit pana apesi din nou (toggle)
   recognition.maxAlternatives = 1;
 
   recognition.onresult = (e) => {
-    const text = e.results[0][0].transcript;
-    onResult(text);
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalTranscript += t + ' ';
+      else interim += t;
+    }
+    const inputEl = document.getElementById('aiInput');
+    if (inputEl) inputEl.value = (finalTranscript + interim).trim();
   };
-  recognition.onerror = (e) => onError(e.error);
-  recognition.onend = () => { isListening = false; updateMicBtn(); };
+  recognition.onerror = (e) => {
+    if (e.error === 'aborted' || e.error === 'no-speech') return; // benigne, le ignoram
+    onError(e.error);
+  };
+  recognition.onend = () => {
+    isListening = false;
+    updateMicBtn();
+    const text = finalTranscript.trim();
+    if (!voiceCancelled && text) onFinal(text); // trimite ce s-a auzit cand opresti
+  };
+
   recognition.start();
   isListening = true;
   updateMicBtn();
 }
 
+// Opreste si proceseaza textul (apasare microfon a doua oara)
 function stopListening() {
-  if (recognition) { recognition.stop(); recognition = null; }
+  if (recognition) { try { recognition.stop(); } catch {} }
+  isListening = false;
+  updateMicBtn();
+}
+
+// Anuleaza fara sa trimita (inchidere panou)
+function cancelListening() {
+  voiceCancelled = true;
+  if (recognition) { try { recognition.stop(); } catch {} recognition = null; }
   isListening = false;
   updateMicBtn();
 }
@@ -315,7 +346,7 @@ function initUI(ctx) {
     isOpen = false;
     panel.hidden = true;
     fab.classList.remove('ai-fab-open');
-    stopListening();
+    cancelListening();
     synth?.cancel();
   });
 
