@@ -274,6 +274,59 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <!-- AI Assistant -->
+    <button class="ai-fab" id="aiFab" aria-label="Asistent AI" title="Asistent AI">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
+        <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/>
+        <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+
+    <div class="ai-panel" id="aiPanel" hidden>
+      <div class="ai-panel-head">
+        <span class="ai-panel-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
+            <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/>
+          </svg>
+          Asistent Straja
+        </span>
+        <button class="ai-close-btn" id="aiCloseBtn" aria-label="Inchide">✕</button>
+      </div>
+
+      <div class="ai-chat-log" id="aiChatLog"></div>
+
+      <div class="ai-thinking" id="aiThinking" hidden>
+        <span></span><span></span><span></span>
+      </div>
+
+      <form class="ai-form" id="aiForm" autocomplete="off">
+        <input
+          class="ai-input"
+          id="aiInput"
+          type="text"
+          placeholder="Intreaba ceva despre santier..."
+          autocomplete="off"
+        />
+        <button class="ai-mic-btn" id="aiMicBtn" type="button" aria-label="Vorbeste">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="8" y1="22" x2="16" y2="22"/>
+          </svg>
+        </button>
+        <button class="ai-send-btn" type="submit" aria-label="Trimite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
     <script src="https://accounts.google.com/gsi/client" async></script>
     <script type="module" src="./app.js"></script>
   </body>

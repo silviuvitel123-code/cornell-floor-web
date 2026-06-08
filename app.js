@@ -14,6 +14,7 @@ import {
   subscribeToProgress,
   saveProgress,
 } from "./js/db.js";
+import { initAIAssistant } from "./js/ai-assistant.js";
 
 const storageKey = "cf-cornells-floor-v1";
 const monthNames = ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"];
@@ -1838,6 +1839,13 @@ async function bootstrap() {
 
   initAuth();    // Firebase updateaza in background cand e gata
   initHeroSlider();
+  initAIAssistant(
+    () => state,
+    () => progressData,
+    STRAJA_CANAL,
+    STRAJA_REFULARE,
+    STRAJA_APA,
+  );
 }
 
 function registerServiceWorker() {
