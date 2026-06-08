@@ -1,9 +1,6 @@
 // AI Assistant — Cornell's Floor
 // Construieste system prompt din datele live ale aplicatiei, trimite la /api/ai-chat
-
-const STRAJA_CANAL = window.__STRAJA_CANAL__;
-const STRAJA_REFULARE = window.__STRAJA_REFULARE__;
-const STRAJA_APA = window.__STRAJA_APA__;
+// Datele (canal/refulare/apa) si actiunile vin prin initAIAssistant() din app.js.
 
 let conversationHistory = [];
 let isOpen = false;
@@ -128,27 +125,109 @@ ${sitesText || '  (niciun santier adaugat)'}
 == ECHIPA ==
 ${workersText || '  (nicio persoana)'}
 
-Raspunde direct la intrebare. Daca se cere un calcul (procent, rest, total), calculeaza si spune rezultatul.`;
+Raspunde direct la intrebare. Daca se cere un calcul (procent, rest, total), calculeaza si spune rezultatul.
+
+POTI EFECTUA ACTIUNI prin uneltele disponibile:
+- actualizeaza_progres: cand utilizatorul spune cati metri a executat pe un tronson, sau modifica camine/racorduri/bransamente/perioada/observatii. Ex: "am facut 800 de metri pe Cm13" -> actualizeaza_progres(canal, Cm13, exec, 800).
+- pontaj: cand cere sa ponteze pe cineva, concediu sau zi libera.
+- genereaza_raport: cand cere un raport/situatie/rezumat al stadiului.
+Dupa ce o unealta ruleaza, confirma pe scurt in limba romana ce ai facut, folosind rezultatul primit. Nu inventa valori — daca o unealta da eroare, spune exact ce eroare.`;
 }
 
-// ── Trimitere mesaj la API ────────────────────────────────────────────────────
+// ── Unelte (tool use) ─────────────────────────────────────────────────────────
 
-async function sendMessage(userText, state, progressData, canal, refulare, apa) {
+const TOOLS = [
+  {
+    name: "actualizeaza_progres",
+    description: "Actualizeaza progresul pentru un tronson din santierul Straja. Foloseste cand utilizatorul spune cati metri a executat sau vrea sa modifice executat/camine/racorduri/bransamente/perioada/observatii pentru un tronson.",
+    input_schema: {
+      type: "object",
+      properties: {
+        categorie: { type: "string", enum: ["canal", "refulare", "apa"], description: "canal=tronsoane Cm, refulare=tronsoane CR, apa=tronsoane CD" },
+        tronson: { type: "string", description: "ID-ul tronsonului, ex: Cm13, CR3, CD5" },
+        camp: { type: "string", enum: ["exec", "cv", "rac", "brans", "per", "obs"], description: "exec=metri executati, cv=camine vizitare/vane, rac=racorduri, brans=bransamente, per=perioada executiei, obs=observatii" },
+        valoare: { type: "string", description: "Valoarea noua. Numar pentru exec/cv/rac/brans; text pentru per/obs." },
+      },
+      required: ["categorie", "tronson", "camp", "valoare"],
+    },
+  },
+  {
+    name: "pontaj",
+    description: "Ponteaza o persoana (muncitor sau inginer) pentru o zi. Foloseste cand utilizatorul cere sa ponteze pe cineva, sa marcheze concediu (CO) sau zi libera.",
+    input_schema: {
+      type: "object",
+      properties: {
+        persoana: { type: "string", description: "Numele sau parte din numele persoanei. Pentru inginer: 'inginer' sau 'Vitel'." },
+        data: { type: "string", description: "Data in format YYYY-MM-DD. Daca lipseste = ziua de azi." },
+        tip: { type: "string", enum: ["8h", "10h", "CO", "liber"], description: "8h=08:00-17:00, 10h=07:00-17:30, CO=concediu, liber=0 ore" },
+      },
+      required: ["persoana", "tip"],
+    },
+  },
+  {
+    name: "genereaza_raport",
+    description: "Genereaza un raport cu stadiul executiei pe retele. Foloseste cand utilizatorul cere un raport, o situatie sau un rezumat al progresului.",
+    input_schema: {
+      type: "object",
+      properties: {
+        sectiune: { type: "string", enum: ["canal", "refulare", "apa", "tot"], description: "Ce retea sa includa. 'tot' = canal + refulare + apa." },
+      },
+      required: ["sectiune"],
+    },
+  },
+];
+
+async function executeTool(name, input, actions) {
+  try {
+    if (name === "actualizeaza_progres") return await actions.updateProgress(input);
+    if (name === "pontaj")               return await actions.setPontaj(input);
+    if (name === "genereaza_raport")     return await actions.generateReport(input);
+    return `Unealta necunoscuta: ${name}`;
+  } catch (e) {
+    return `Eroare la executie: ${e.message}`;
+  }
+}
+
+// ── Trimitere mesaj la API (cu bucla de tool use) ─────────────────────────────
+
+async function sendMessage(userText, ctx) {
   conversationHistory.push({ role: 'user', content: userText });
 
-  const systemPrompt = buildSystemPrompt(state, progressData, canal, refulare, apa);
+  let guard = 0;
+  while (guard++ < 6) {
+    // Reconstruim system prompt-ul la fiecare pas — reflecta datele actualizate de unelte
+    const systemPrompt = buildSystemPrompt(ctx.getState(), ctx.getProgress(), ctx.canal, ctx.refulare, ctx.apa);
 
-  const res = await fetch('/api/ai-chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: conversationHistory, systemPrompt }),
-  });
+    const res = await fetch('/api/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: conversationHistory, systemPrompt, tools: TOOLS }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Eroare server.');
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Eroare server.');
+    conversationHistory.push({ role: 'assistant', content: data.content });
 
-  conversationHistory.push({ role: 'assistant', content: data.reply });
-  return data.reply;
+    if (data.stop_reason === 'tool_use') {
+      const toolResults = [];
+      for (const block of data.content) {
+        if (block.type === 'tool_use') {
+          const result = await executeTool(block.name, block.input, ctx.actions);
+          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: String(result) });
+        }
+      }
+      conversationHistory.push({ role: 'user', content: toolResults });
+      continue; // mai cerem un raspuns ca sa confirme in cuvinte
+    }
+
+    const text = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n')
+      .trim();
+    return text || '(gata)';
+  }
+  return 'Am oprit dupa prea multe operatii consecutive.';
 }
 
 // ── Voice ────────────────────────────────────────────────────────────────────
@@ -212,7 +291,7 @@ function setThinking(show) {
   if (el) el.hidden = !show;
 }
 
-function initUI(getState, getProgress, canal, refulare, apa) {
+function initUI(ctx) {
   const fab      = document.getElementById('aiFab');
   const panel    = document.getElementById('aiPanel');
   const closeBtn = document.getElementById('aiCloseBtn');
@@ -227,7 +306,7 @@ function initUI(getState, getProgress, canal, refulare, apa) {
     panel.hidden = !isOpen;
     fab.classList.toggle('ai-fab-open', isOpen);
     if (isOpen && document.getElementById('aiChatLog').children.length === 0) {
-      appendMessage('assistant', 'Salut! Sunt asistentul tau pentru santierul Straja. Ce vrei sa stii?');
+      appendMessage('assistant', 'Salut! Sunt asistentul tau pentru santierul Straja. Pot raspunde la intrebari, pot completa progresul, pot ponta si pot scoate rapoarte. Ce facem?');
     }
     if (isOpen) input?.focus();
   });
@@ -245,7 +324,7 @@ function initUI(getState, getProgress, canal, refulare, apa) {
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
-    await handleUserMessage(text, getState, getProgress, canal, refulare, apa);
+    await handleUserMessage(text, ctx);
   });
 
   micBtn?.addEventListener('click', () => {
@@ -255,7 +334,7 @@ function initUI(getState, getProgress, canal, refulare, apa) {
       startListening(
         async (text) => {
           input.value = text;
-          await handleUserMessage(text, getState, getProgress, canal, refulare, apa);
+          await handleUserMessage(text, ctx);
           input.value = '';
         },
         (err) => appendMessage('assistant', `Eroare microfon: ${err}`)
@@ -264,11 +343,11 @@ function initUI(getState, getProgress, canal, refulare, apa) {
   });
 }
 
-async function handleUserMessage(text, getState, getProgress, canal, refulare, apa) {
+async function handleUserMessage(text, ctx) {
   appendMessage('user', text);
   setThinking(true);
   try {
-    const reply = await sendMessage(text, getState(), getProgress(), canal, refulare, apa);
+    const reply = await sendMessage(text, ctx);
     setThinking(false);
     appendMessage('assistant', reply);
     speak(reply);
@@ -280,6 +359,7 @@ async function handleUserMessage(text, getState, getProgress, canal, refulare, a
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-export function initAIAssistant(getState, getProgress, canal, refulare, apa) {
-  initUI(getState, getProgress, canal, refulare, apa);
+export function initAIAssistant(getState, getProgress, canal, refulare, apa, actions) {
+  const ctx = { getState, getProgress, canal, refulare, apa, actions: actions || {} };
+  initUI(ctx);
 }

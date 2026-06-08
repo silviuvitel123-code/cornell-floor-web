@@ -13,6 +13,7 @@ import {
   getDriveToken,
   subscribeToProgress,
   saveProgress,
+  getProgressOnce,
 } from "./js/db.js";
 import { initAIAssistant } from "./js/ai-assistant.js";
 
@@ -1845,7 +1846,95 @@ async function bootstrap() {
     STRAJA_CANAL,
     STRAJA_REFULARE,
     STRAJA_APA,
+    buildAIActions(),
   );
+}
+
+// ══ ACTIUNI ASISTENT AI ══
+function resolveStrajaSiteId() {
+  const straja = state.sites.find((s) => /straja/i.test(s.name));
+  return straja?.id || currentSiteId || state.sites[0]?.id || null;
+}
+
+function buildAIActions() {
+  const CATS = { canal: STRAJA_CANAL, refulare: STRAJA_REFULARE, apa: STRAJA_APA };
+
+  return {
+    // Actualizeaza un camp de progres pentru un tronson (citeste fresh din cloud, evita pierderea datelor)
+    async updateProgress({ categorie, tronson, camp, valoare }) {
+      const list = CATS[categorie];
+      if (!list) return `Categorie invalida: "${categorie}". Foloseste canal, refulare sau apa.`;
+      const match = list.find((t) => t.id.toLowerCase() === String(tronson || "").toLowerCase());
+      if (!match) return `Tronsonul "${tronson}" nu exista in ${categorie}.`;
+      const allowed = categorie === "canal" ? ["exec", "cv", "rac", "per", "obs"]
+        : categorie === "apa" ? ["exec", "cv", "brans", "per"]
+        : ["exec", "cv", "per"];
+      if (!allowed.includes(camp)) return `Campul "${camp}" nu e valid pentru ${categorie}. Permise: ${allowed.join(", ")}.`;
+
+      const numericFields = ["exec", "cv", "rac", "brans"];
+      let val = valoare;
+      if (numericFields.includes(camp)) val = Math.max(0, parseFloat(String(valoare).replace(",", ".")) || 0);
+
+      if (!currentUser) return "Nu esti autentificat — nu pot salva in cloud.";
+      const siteId = resolveStrajaSiteId();
+      if (!siteId) return "Nu am gasit santierul Straja in lista de santiere.";
+
+      const fresh = await getProgressOnce(currentUser.uid, siteId);
+      if (!fresh[categorie]) fresh[categorie] = {};
+      if (!fresh[categorie][match.id]) fresh[categorie][match.id] = {};
+      fresh[categorie][match.id][camp] = val;
+      await saveProgress(currentUser.uid, siteId, fresh);
+      progressData = fresh;
+
+      const panel = $("#chapterContent");
+      if (panel && currentChapterKey === "progres-santier") renderPtContent(siteId, panel, fresh);
+
+      const unit = camp === "exec" ? "m" : "";
+      const fieldLabel = { exec: "executat", cv: "camine", rac: "racorduri", brans: "bransamente", per: "perioada", obs: "observatii" }[camp];
+      return `Salvat: ${match.id} — ${fieldLabel} = ${val}${unit} (proiectat ${match.proj}m).`;
+    },
+
+    // Ponteaza o persoana pentru o zi
+    setPontaj({ persoana, data, tip }) {
+      const iso = data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : todayIso();
+      const q = String(persoana || "").toLowerCase().trim();
+      let worker = null;
+      if (/inginer|vitel/.test(q)) worker = state.workers.find((w) => w.isEngineer);
+      if (!worker && q) worker = state.workers.find((w) => w.active !== false && w.name.toLowerCase().includes(q));
+      if (!worker && q) worker = state.workers.find((w) => w.name.toLowerCase().includes(q));
+      if (!worker) return `Nu am gasit persoana "${persoana}". Persoane: ${state.workers.map((w) => w.name).join(", ")}.`;
+
+      const mode = { "8h": "8h", "10h": "10h", CO: "CO", liber: "0h" }[tip] || "8h";
+      setDay(worker, iso, mode);
+      saveState();
+      renderWorkers();
+      renderSummary();
+      renderSheetPreview();
+
+      const lbl = iso === todayIso() ? "azi" : formatDateLabel(iso);
+      const tipLbl = { "8h": "8 ore (08-17)", "10h": "10 ore (07-17:30)", CO: "concediu CO", liber: "zi libera" }[tip] || tip;
+      return `Pontat: ${worker.name}, ${lbl} — ${tipLbl}.`;
+    },
+
+    // Genereaza un raport calculat din datele live
+    generateReport({ sectiune }) {
+      const mk = (label, rows, liveCat) => {
+        const merged = rows.map((t) => ({ ...t, exec: Number(progressData?.[liveCat]?.[t.id]?.exec ?? t.exec) }));
+        const proj = merged.reduce((s, r) => s + r.proj, 0);
+        const exec = merged.reduce((s, r) => s + (r.exec || 0), 0);
+        const done = merged.filter((r) => r.proj > 0 && r.exec >= r.proj).map((r) => r.id);
+        const partial = merged.filter((r) => r.exec > 0 && r.exec < r.proj).map((r) => `${r.id} (${r.exec}/${r.proj}m)`);
+        const notStarted = merged.filter((r) => !r.exec).length;
+        const p = proj > 0 ? Math.round((exec / proj) * 100) : 0;
+        return `${label}: ${exec}/${proj}m executat (${p}%).\n  Finalizate (${done.length}): ${done.join(", ") || "-"}\n  In lucru: ${partial.join(", ") || "-"}\n  Neincepute: ${notStarted} tronsoane`;
+      };
+      const parts = [];
+      if (sectiune === "canal" || sectiune === "tot") parts.push(mk("CANALIZARE", STRAJA_CANAL, "canal"));
+      if (sectiune === "refulare" || sectiune === "tot") parts.push(mk("REFULARE", STRAJA_REFULARE, "refulare"));
+      if (sectiune === "apa" || sectiune === "tot") parts.push(mk("APA", STRAJA_APA, "apa"));
+      return parts.join("\n\n") || `Sectiune invalida: "${sectiune}".`;
+    },
+  };
 }
 
 function registerServiceWorker() {

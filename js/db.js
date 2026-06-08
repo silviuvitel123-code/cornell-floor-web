@@ -137,6 +137,11 @@ export async function saveProgress(uid, siteId, data) {
   await set(ref(db, `users/${uid}/siteProgress/${siteId}`), data);
 }
 
+export async function getProgressOnce(uid, siteId) {
+  const snap = await get(ref(db, `users/${uid}/siteProgress/${siteId}`));
+  return snap.val() || {};
+}
+
 export function subscribeToFiles(uid, siteId, chapterKey, onFiles, onError) {
   const dbRef = ref(db, `users/${uid}/siteFiles/${siteId}/${chapterKey}`);
   onValue(dbRef, (snap) => {

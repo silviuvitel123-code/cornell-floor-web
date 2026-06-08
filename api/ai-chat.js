@@ -23,13 +23,21 @@ export default async function handler(req) {
     });
   }
 
-  const { messages, systemPrompt } = body;
+  const { messages, systemPrompt, tools } = body;
   if (!messages || !systemPrompt) {
     return new Response(JSON.stringify({ error: "Lipsesc campuri obligatorii." }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const payload = {
+    model: "claude-haiku-4-5",
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages,
+  };
+  if (Array.isArray(tools) && tools.length) payload.tools = tools;
 
   const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -38,12 +46,7 @@ export default async function handler(req) {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages,
-    }),
+    body: JSON.stringify(payload),
   });
 
   const data = await anthropicRes.json();
@@ -55,7 +58,8 @@ export default async function handler(req) {
     });
   }
 
-  return new Response(JSON.stringify({ reply: data.content[0].text }), {
+  // Returnam raspunsul complet: blocurile de continut (text + tool_use) si motivul opririi
+  return new Response(JSON.stringify({ content: data.content, stop_reason: data.stop_reason }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
