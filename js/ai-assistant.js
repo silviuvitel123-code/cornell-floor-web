@@ -324,7 +324,8 @@ function initUI(ctx) {
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
-    await handleUserMessage(text, ctx);
+    // Intrebare scrisa -> raspuns doar in scris (fara voce)
+    await handleUserMessage(text, ctx, false);
   });
 
   micBtn?.addEventListener('click', () => {
@@ -334,7 +335,8 @@ function initUI(ctx) {
       startListening(
         async (text) => {
           input.value = text;
-          await handleUserMessage(text, ctx);
+          // Intrebare verbala -> raspuns si vocal
+          await handleUserMessage(text, ctx, true);
           input.value = '';
         },
         (err) => appendMessage('assistant', `Eroare microfon: ${err}`)
@@ -343,14 +345,14 @@ function initUI(ctx) {
   });
 }
 
-async function handleUserMessage(text, ctx) {
+async function handleUserMessage(text, ctx, viaVoice = false) {
   appendMessage('user', text);
   setThinking(true);
   try {
     const reply = await sendMessage(text, ctx);
     setThinking(false);
     appendMessage('assistant', reply);
-    speak(reply);
+    if (viaVoice) speak(reply); // citeste cu voce doar daca intrebarea a venit prin microfon
   } catch (err) {
     setThinking(false);
     appendMessage('assistant', `Eroare: ${err.message}`);
