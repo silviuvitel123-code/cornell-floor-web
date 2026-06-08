@@ -953,10 +953,11 @@ function renderPtContent(siteId, panel, data) {
   }));
   const apaRows = STRAJA_APA.map(t => ({
     ...t,
-    exec:  Number(apa[t.id]?.exec  ?? t.exec),
-    cv:    Number(apa[t.id]?.cv    ?? t.cv),
-    brans: Number(apa[t.id]?.brans ?? t.brans),
-    per:   apa[t.id]?.per ?? t.per,
+    exec:     Number(apa[t.id]?.exec     ?? t.exec),
+    cv:       Number(apa[t.id]?.cv       ?? t.cv),
+    hidranti: Number(apa[t.id]?.hidranti ?? t.hidranti ?? 0),
+    brans:    Number(apa[t.id]?.brans    ?? t.brans),
+    per:      apa[t.id]?.per ?? t.per,
   }));
   const totalProjCanal = canalRows.reduce((s,r) => s+r.proj, 0);
   const totalExecCanal = canalRows.reduce((s,r) => s+r.exec, 0);
@@ -1867,11 +1868,11 @@ function buildAIActions() {
       const match = list.find((t) => t.id.toLowerCase() === String(tronson || "").toLowerCase());
       if (!match) return `Tronsonul "${tronson}" nu exista in ${categorie}.`;
       const allowed = categorie === "canal" ? ["exec", "cv", "rac", "per", "obs"]
-        : categorie === "apa" ? ["exec", "cv", "brans", "per"]
+        : categorie === "apa" ? ["exec", "cv", "hidranti", "brans", "per"]
         : ["exec", "cv", "per"];
       if (!allowed.includes(camp)) return `Campul "${camp}" nu e valid pentru ${categorie}. Permise: ${allowed.join(", ")}.`;
 
-      const numericFields = ["exec", "cv", "rac", "brans"];
+      const numericFields = ["exec", "cv", "rac", "brans", "hidranti"];
       let val = valoare;
       if (numericFields.includes(camp)) val = Math.max(0, parseFloat(String(valoare).replace(",", ".")) || 0);
 
@@ -1890,7 +1891,7 @@ function buildAIActions() {
       if (panel && currentChapterKey === "progres-santier") renderPtContent(siteId, panel, fresh);
 
       const unit = camp === "exec" ? "m" : "";
-      const fieldLabel = { exec: "executat", cv: "camine", rac: "racorduri", brans: "bransamente", per: "perioada", obs: "observatii" }[camp];
+      const fieldLabel = { exec: "executat", cv: "camine", rac: "racorduri", hidranti: "hidranti", brans: "bransamente", per: "perioada", obs: "observatii" }[camp];
       return `Salvat: ${match.id} — ${fieldLabel} = ${val}${unit} (proiectat ${match.proj}m).`;
     },
 

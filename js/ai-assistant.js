@@ -31,7 +31,7 @@ RETEA REFULARE (canalizare sub presiune):
 RETEA APA POTABILA (distributie):
 - Material: PEHD-RC cu protectie PP, PE100, Pn10
 - 34 tronsoane (CD1 - CD20, CD22 - CD35)
-- Camine de vane si bransamente
+- Camine de vane, bransamente si hidranti de incendiu (numarul de hidranti montati e urmarit pe fiecare tronson CD)
 
 STATII DE POMPARE APA UZATA (SPAU):
 - 9 statii de pompare: SPAU 1 ... SPAU 9, fiecare cu racord electric propriu
@@ -89,6 +89,7 @@ function buildSystemPrompt(state, progressData, canal, refulare, apa) {
   const totalExecCanalLive = canalLive.reduce((s, r) => s + (r.exec || 0), 0);
   const totalExecRefLive   = refLive.reduce((s, r) => s + (r.exec || 0), 0);
   const totalExecApaLive   = apaLive.reduce((s, r) => s + (r.exec || 0), 0);
+  const totalHidranti      = apaLive.reduce((s, r) => s + (Number(r.hidranti) || 0), 0);
 
   return `Esti asistentul AI al inginerului Vitel Silviu de la firma Cornell's Floor. \
 Lucrezi pe santierul STRAJA (sistem apa-canal). Raspunzi DOAR in limba romana, concis si direct. \
@@ -113,9 +114,10 @@ ${refLive.map(r =>
 ).join('\n')}
 
 == APA POTABILA ==
-Total proiectat: ${totalProjApa}m | Executat: ${totalExecApaLive}m | Ramas: ${totalProjApa - totalExecApaLive}m
+Total proiectat: ${totalProjApa}m | Executat: ${totalExecApaLive}m | Ramas: ${totalProjApa - totalExecApaLive}m | Total hidranti montati: ${totalHidranti}
 ${apaLive.map(r =>
   `  ${r.id}: proj=${r.proj}m exec=${r.exec||0}m ramas=${r.proj-(r.exec||0)}m` +
+  (r.cv ? ` camine_vane=${r.cv}` : '') + (r.hidranti ? ` hidranti=${r.hidranti}` : '') +
   (r.brans ? ` brans=${r.brans}` : '') + (r.per ? ` [${r.per}]` : '')
 ).join('\n')}
 
@@ -145,7 +147,7 @@ const TOOLS = [
       properties: {
         categorie: { type: "string", enum: ["canal", "refulare", "apa"], description: "canal=tronsoane Cm, refulare=tronsoane CR, apa=tronsoane CD" },
         tronson: { type: "string", description: "ID-ul tronsonului, ex: Cm13, CR3, CD5" },
-        camp: { type: "string", enum: ["exec", "cv", "rac", "brans", "per", "obs"], description: "exec=metri executati, cv=camine vizitare/vane, rac=racorduri, brans=bransamente, per=perioada executiei, obs=observatii" },
+        camp: { type: "string", enum: ["exec", "cv", "rac", "hidranti", "brans", "per", "obs"], description: "exec=metri executati, cv=camine vizitare/vane, rac=racorduri, hidranti=hidranti (doar la apa), brans=bransamente, per=perioada executiei, obs=observatii" },
         valoare: { type: "string", description: "Valoarea noua. Numar pentru exec/cv/rac/brans; text pentru per/obs." },
       },
       required: ["categorie", "tronson", "camp", "valoare"],
